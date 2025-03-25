@@ -2,11 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Snackbar, Alert } from "@mui/material";
-
-// Hardcoded Admin User
-const ADMIN_USERS = {
-  "aisat2025@gmail.com": { password: "aisat@123", role: "admin" },
-};
+import { authService } from "../services/api";
 
 export const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
@@ -14,14 +10,20 @@ export const AdminLoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (ADMIN_USERS[email] && ADMIN_USERS[email].password === password) {
+    setIsLoading(true);
+
+    try {
+      await authService.login(email, password, "admin");
       navigate("/admin-dashboard");
-    } else {
-      showError("Invalid admin email or password.");
+    } catch (error) {
+      showError(error.message || "Invalid admin email or password.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,6 +50,7 @@ export const AdminLoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-gray-200 border-none p-3 mb-4 rounded-lg"
+                required
               />
               <div className="relative w-full">
                 <input
@@ -56,6 +59,7 @@ export const AdminLoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-gray-200 border-none p-3 mb-4 rounded-lg pr-10"
+                  required
                 />
                 <span
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500"
@@ -66,9 +70,12 @@ export const AdminLoginPage = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-orange-500 text-white font-bold py-3 rounded-full uppercase tracking-wide hover:bg-orange-600 transition-transform duration-75 active:scale-95"
+                className={`w-full bg-orange-500 text-white font-bold py-3 rounded-full uppercase tracking-wide hover:bg-orange-600 transition-transform duration-75 active:scale-95 ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+                disabled={isLoading}
               >
-                Login
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </form>
           </div>

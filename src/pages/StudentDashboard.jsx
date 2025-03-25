@@ -1,35 +1,29 @@
-import React from "react";
-
-// Mock data for upcoming exams
-const upcomingExams = [
-  {
-    id: 1,
-    subject: "Mathematics",
-    date: "2023-11-15",
-    time: "10:00 AM - 12:00 PM",
-    venue: "Hall A",
-    type: "Mid-Term",
-  },
-  {
-    id: 2,
-    subject: "Computer Science",
-    date: "2023-11-18",
-    time: "02:00 PM - 04:00 PM",
-    venue: "Lab 3",
-    type: "Practical",
-  },
-  {
-    id: 3,
-    subject: "Physics",
-    date: "2023-11-22",
-    time: "09:00 AM - 11:00 AM",
-    venue: "Hall B",
-    type: "Final",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { studentService } from "../services/api";
 
 export const StudentDashboard = () => {
-  const [date, setDate] = React.useState(new Date());
+  const [date, setDate] = useState(new Date());
+  const [upcomingExams, setUpcomingExams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        setLoading(true);
+        const exams = await studentService.getExams();
+        setUpcomingExams(exams);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+        setError("Failed to load exam data. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, []);
 
   // Function to format date in a readable format
   const formatDate = (dateString) => {
@@ -55,47 +49,71 @@ export const StudentDashboard = () => {
               </p>
             </div>
             <div className="p-4">
-              <div className="space-y-4">
-                {upcomingExams.map((exam) => (
-                  <div
-                    key={exam.id}
-                    className="border border-gray-200 rounded-lg"
+              {loading ? (
+                <div className="text-center py-8">
+                  <p>Loading exams data...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-red-500">
+                  <p>{error}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-2 text-blue-500 hover:underline"
                   >
-                    <div className="p-4 pb-2 border-b border-gray-100">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-lg font-medium">{exam.subject}</h4>
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            exam.type === "Final"
-                              ? "bg-gray-800 text-white"
-                              : exam.type === "Mid-Term"
-                              ? "bg-gray-600 text-white"
-                              : "bg-gray-200 text-gray-800"
-                          }`}
-                        >
-                          {exam.type}
-                        </span>
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {upcomingExams.length > 0 ? (
+                    upcomingExams.map((exam) => (
+                      <div
+                        key={exam.id}
+                        className="border border-gray-200 rounded-lg"
+                      >
+                        <div className="p-4 pb-2 border-b border-gray-100">
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-lg font-medium">
+                              {exam.subject}
+                            </h4>
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                exam.type === "Final"
+                                  ? "bg-gray-800 text-white"
+                                  : exam.type === "Mid-Term"
+                                  ? "bg-gray-600 text-white"
+                                  : "bg-gray-200 text-gray-800"
+                              }`}
+                            >
+                              {exam.type}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-4 pb-2">
+                          <p className="text-sm text-gray-500">
+                            <strong>Date:</strong> {formatDate(exam.date)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            <strong>Time:</strong> {exam.time}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            <strong>Venue:</strong> {exam.venue}
+                          </p>
+                        </div>
+                        <div className="p-4 pt-2">
+                          <button className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                            View Details
+                          </button>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p>No upcoming exams found.</p>
                     </div>
-                    <div className="p-4 pb-2">
-                      <p className="text-sm text-gray-500">
-                        <strong>Date:</strong> {formatDate(exam.date)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Time:</strong> {exam.time}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Venue:</strong> {exam.venue}
-                      </p>
-                    </div>
-                    <div className="p-4 pt-2">
-                      <button className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="p-4 border-t border-gray-200">
               <button className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 transition-colors">
@@ -148,22 +166,38 @@ export const StudentDashboard = () => {
               <h3 className="text-lg font-semibold">Quick Info</h3>
             </div>
             <div className="p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Upcoming Exams</span>
-                  <span className="font-bold">{upcomingExams.length}</span>
+              {loading ? (
+                <div className="text-center py-4">
+                  <p>Loading...</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Next Exam</span>
-                  <span className="font-bold">{upcomingExams[0].subject}</span>
+              ) : error ? (
+                <div className="text-center py-4 text-red-500">
+                  <p>Unable to load information</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>On</span>
-                  <span className="font-bold">
-                    {formatDate(upcomingExams[0].date)}
-                  </span>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Upcoming Exams</span>
+                    <span className="font-bold">{upcomingExams.length}</span>
+                  </div>
+                  {upcomingExams.length > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Next Exam</span>
+                        <span className="font-bold">
+                          {upcomingExams[0].subject}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>On</span>
+                        <span className="font-bold">
+                          {formatDate(upcomingExams[0].date)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
             <div className="p-4 border-t border-gray-200">
               <button className="w-full py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">

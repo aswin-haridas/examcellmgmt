@@ -1,17 +1,45 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { authService } from "../services/api";
+import { Snackbar, Alert } from "@mui/material";
 
 const LogoutPage = () => {
-  // In a real application, you would handle logout logic here
-  // For example:
+  const [error, setError] = useState("");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
   useEffect(() => {
-    // Clear user session/token
-    // localStorage.removeItem('token');
-    console.log("User logged out");
+    const performLogout = async () => {
+      try {
+        await authService.logout();
+        console.log("User logged out successfully");
+      } catch (error) {
+        setError(error.message || "Error logging out");
+        setOpenSnackbar(true);
+      }
+    };
+
+    performLogout();
   }, []);
 
-  // Redirect to login page or home page
-  return <Navigate to="/" replace />;
+  return (
+    <>
+      <Navigate to="/" replace />
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="error"
+          variant="filled"
+        >
+          {error}
+        </Alert>
+      </Snackbar>
+    </>
+  );
 };
 
 export default LogoutPage;

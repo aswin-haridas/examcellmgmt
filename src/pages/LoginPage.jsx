@@ -3,12 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Snackbar, Alert } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Hardcoded Users
-const USERS = {
-  "student@gmail.com": { password: "student123", role: "student" },
-  "faculty@gmail.com": { password: "faculty123", role: "faculty" },
-};
+import { authService } from "../services/api";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -17,23 +12,23 @@ export const LoginPage = () => {
   const [isFacultyLogin, setIsFacultyLogin] = useState(false);
   const [error, setError] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (USERS[email] && USERS[email].password === password) {
-      const expectedRole = isFacultyLogin ? "faculty" : "student";
-      if (USERS[email].role === expectedRole) {
-        navigate(
-          expectedRole === "student"
-            ? "/student-dashboard"
-            : "/faculty-dashboard"
-        );
-      } else {
-        showError("Invalid role selection for this email.");
-      }
-    } else {
-      showError("Invalid email or password.");
+    setIsLoading(true);
+
+    try {
+      const role = isFacultyLogin ? "faculty" : "student";
+      await authService.login(email, password, role);
+      navigate(
+        role === "student" ? "/student-dashboard" : "/faculty-dashboard"
+      );
+    } catch (error) {
+      showError(error.message || "Invalid email or password.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,6 +39,8 @@ export const LoginPage = () => {
 
   const handleSwitch = () => {
     setIsFacultyLogin(!isFacultyLogin);
+    setEmail("");
+    setPassword("");
   };
 
   const formVariants = {
@@ -135,11 +132,14 @@ export const LoginPage = () => {
                   </div>
                   <motion.button
                     type="submit"
-                    className="w-full bg-orange-500 text-white font-bold py-3 rounded-full uppercase tracking-wide mb-4  focus:outline-orange-500 focus:outline-2"
+                    className={`w-full bg-orange-500 text-white font-bold py-3 rounded-full uppercase tracking-wide mb-4 focus:outline-orange-500 focus:outline-2 ${
+                      isLoading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                     whileTap={{ scale: 0.95 }}
                     whileHover={{ backgroundColor: "#dd6b20" }}
+                    disabled={isLoading}
                   >
-                    Login
+                    {isLoading ? "Logging in..." : "Login"}
                   </motion.button>
                 </form>
               </motion.div>
