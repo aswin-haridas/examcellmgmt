@@ -20,11 +20,16 @@ export const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const role = isFacultyLogin ? "faculty" : "student";
-      await authService.login(email, password, role);
-      navigate(
-        role === "student" ? "/student-dashboard" : "/faculty-dashboard"
-      );
+      const user = await authService.login(email, password);
+      console.log("User logged in successfully", user);
+      const path =
+        user.role === "admin"
+          ? "/admin"
+          : user.role === "faculty"
+          ? "/faculty"
+          : "/student";
+      localStorage.setItem("loggedIn", "true");
+      navigate(path);
     } catch (error) {
       showError(error.message || "Invalid email or password.");
     } finally {

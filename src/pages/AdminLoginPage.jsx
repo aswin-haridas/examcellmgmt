@@ -21,15 +21,11 @@ export const AdminLoginPage = () => {
       await authService.login(email, password, "admin");
       navigate("/admin-dashboard");
     } catch (error) {
-      showError(error.message || "Invalid admin email or password.");
+      setError(error.message || "Invalid admin email or password.");
+      setOpenSnackbar(true);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const showError = (message) => {
-    setError(message);
-    setOpenSnackbar(true);
   };
 
   const goToStudentFacultyLogin = () => {
@@ -40,7 +36,6 @@ export const AdminLoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="relative w-full max-w-3xl min-h-[480px] bg-white rounded-lg shadow-2xl overflow-hidden">
         <div className="flex h-full">
-          {/* Admin Login Form */}
           <div className="w-1/2 h-full flex items-center justify-center flex-col p-12">
             <form onSubmit={handleLogin} className="w-full text-center">
               <h1 className="text-3xl font-bold mb-6">Admin Login</h1>
@@ -80,7 +75,6 @@ export const AdminLoginPage = () => {
             </form>
           </div>
 
-          {/* Right Panel */}
           <div className="w-1/2 bg-gradient-to-r from-orange-500 to-pink-500 text-white flex items-center justify-center flex-col p-10">
             <h1 className="text-3xl font-bold mb-4">Admin Portal</h1>
             <p className="mb-6 text-center">
@@ -96,7 +90,6 @@ export const AdminLoginPage = () => {
         </div>
       </div>
 
-      {/* Snackbar for Error Messages */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}

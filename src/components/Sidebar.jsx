@@ -15,7 +15,7 @@ const Sidebar = () => {
   const path = location.pathname;
 
   return (
-    <div className="w-64 bg-white shadow-md h-screen">
+    <div className="w-72 bg-white">
       <div className="p-6">
         <h2 className="text-2xl font-bold text-black">ExamCell</h2>
         <p className="text-gray-600">Student Portal</p>

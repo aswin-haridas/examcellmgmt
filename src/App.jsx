@@ -15,44 +15,52 @@ import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import LogoutPage from "./pages/LogoutPage";
+import SeatingArr from "./pages/SeatingArrangement";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Auth Routes */}
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/admin-login" element={<AdminLoginPage />} />
+    <div className="flex h-screen bg-mono-100">
+      <div className="flex-1 p-4">
+        {" "}
+        {/* Add padding to the content area */}
+        <Router>
+          <Routes>
+            {/* Auth Routes */}
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
 
-        {/* Student Routes */}
-        <Route path="/student-dashboard" element={<Layout />}>
-          <Route index element={<StudentDashboard />} />
-          <Route path="courses" element={<CoursesPage />} />
-          <Route path="exam-schedule" element={<ExamSchedulePage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="logout" element={<LogoutPage />} />
-        </Route>
+            {/* Student Routes */}
+            <Route path="/student" element={<Layout />}>
+              <Route index element={<StudentDashboard />} />
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="exam-schedule" element={<ExamSchedulePage />} />
+              <Route path="seating-arrangement" element={<SeatingArr />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="logout" element={<LogoutPage />} />
+            </Route>
 
-        {/* Faculty Routes - can add additional faculty specific pages */}
-        <Route path="/faculty-dashboard" element={<Layout />}>
-          <Route index element={<div>Faculty Dashboard</div>} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="logout" element={<LogoutPage />} />
-        </Route>
+            {/* Faculty Routes - can add additional faculty specific pages */}
+            <Route path="/faculty" element={<Layout />}>
+              <Route index element={<div>Faculty Dashboard</div>} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="logout" element={<LogoutPage />} />
+            </Route>
 
-        {/* Admin Routes */}
-        <Route path="/admin-dashboard" element={<Layout />}>
-          <Route index element={<div>Admin Dashboard</div>} />
-          <Route path="logout" element={<LogoutPage />} />
-        </Route>
+            {/* Admin Routes */}
+            <Route path="/admin" element={<Layout />}>
+              <Route index element={<div>Admin Dashboard</div>} />
+              <Route path="logout" element={<LogoutPage />} />
+            </Route>
 
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </div>
+    </div>
   );
 }
 

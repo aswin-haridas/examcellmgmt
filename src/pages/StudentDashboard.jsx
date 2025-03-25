@@ -25,7 +25,6 @@ export const StudentDashboard = () => {
     fetchExams();
   }, []);
 
-  // Function to format date in a readable format
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -37,9 +36,7 @@ export const StudentDashboard = () => {
         Student Dashboard
       </h1>
 
-      {/* Dashboard Content */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Upcoming Exams */}
         <div className="md:col-span-2">
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
             <div className="p-4 border-b border-gray-200">
@@ -123,7 +120,6 @@ export const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Calendar and Info */}
         <div>
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
             <div className="p-4 border-b border-gray-200">
