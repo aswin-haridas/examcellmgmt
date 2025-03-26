@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Plus, Edit, Trash2, X } from "lucide-react";
 import { adminService } from "../services/api";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/outline";
+import Sidebar from "../components/Sidebar";
 
 const ClassroomManagement = () => {
   const [classrooms, setClassrooms] = useState([]);
@@ -14,7 +15,6 @@ const ClassroomManagement = () => {
     features: "",
   });
 
-  // Fetch classrooms on component mount
   useEffect(() => {
     fetchClassrooms();
   }, []);
@@ -23,11 +23,7 @@ const ClassroomManagement = () => {
     try {
       setLoading(true);
       const classroomData = await adminService.getAllClassrooms();
-
-      // Get all exams to check if classrooms are being used
       const exams = await adminService.getAllExams();
-
-      // Add a status field to each classroom
       const classroomsWithStatus = classroomData.map((classroom) => {
         const isUsedInExams = exams.some(
           (exam) => exam.classroom_id === classroom.id
@@ -37,7 +33,6 @@ const ClassroomManagement = () => {
           status: isUsedInExams ? "In use" : "Available",
         };
       });
-
       setClassrooms(classroomsWithStatus);
     } catch (error) {
       console.error("Error fetching classrooms:", error);
@@ -108,191 +103,205 @@ const ClassroomManagement = () => {
   };
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Classroom Management</h1>
-        <button
-          onClick={openAddModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Classroom
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center my-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Capacity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Features
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {classrooms.length > 0 ? (
-                classrooms.map((classroom) => (
-                  <tr key={classroom.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {classroom.classname}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {classroom.capacity}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {classroom.location || "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500">
-                        {classroom.features || "N/A"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          classroom.status === "In use"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {classroom.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(classroom)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        <PencilIcon className="h-5 w-5 inline" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(classroom.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <TrashIcon className="h-5 w-5 inline" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No classrooms found. Add a classroom to get started.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Modal for Add/Edit Classroom */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
-              {currentClassroom ? "Edit Classroom" : "Add New Classroom"}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Classroom Name
-                </label>
-                <input
-                  type="text"
-                  name="classname"
-                  value={formData.classname}
-                  onChange={handleInputChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Capacity
-                </label>
-                <input
-                  type="number"
-                  name="capacity"
-                  value={formData.capacity}
-                  onChange={handleInputChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  required
-                  min="1"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Features
-                </label>
-                <textarea
-                  name="features"
-                  value={formData.features}
-                  onChange={handleInputChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  rows="3"
-                />
-              </div>
-              <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 p-8 w-full">
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              Classroom Management
+            </h1>
+            <button
+              onClick={openAddModal}
+              className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md flex items-center text-sm font-medium transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Classroom
+            </button>
           </div>
+
+          {loading ? (
+            <div className="flex justify-center my-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-700"></div>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Capacity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Branches
+                    </th>
+
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {classrooms.length > 0 ? (
+                    classrooms.map((classroom) => (
+                      <tr
+                        key={classroom.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {classroom.classname}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-700">
+                            {classroom.capacity}
+                          </div>
+                        </td>
+          
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-700">
+                            {classroom.branches || "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-medium rounded-full ${
+                              classroom.status === "In use"
+                                ? "bg-gray-900 text-white"
+                                : "bg-gray-100 text-gray-800 border border-gray-200"
+                            }`}
+                          >
+                            {classroom.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(classroom)}
+                            className="text-gray-600 hover:text-gray-900 mr-4 transition-colors"
+                            aria-label="Edit classroom"
+                          >
+                            <Edit className="h-4 w-4 inline" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(classroom.id)}
+                            className="text-gray-600 hover:text-red-600 transition-colors"
+                            aria-label="Delete classroom"
+                          >
+                            <Trash2 className="h-4 w-4 inline" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="px-6 py-8 text-center text-sm text-gray-500"
+                      >
+                        No classrooms found. Add a classroom to get started.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {modalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full border border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+                    {currentClassroom ? "Edit Classroom" : "Add New Classroom"}
+                  </h2>
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                    aria-label="Close modal"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-gray-700 text-sm font-medium">
+                      Classroom Name
+                    </label>
+                    <input
+                      type="text"
+                      name="classname"
+                      value={formData.classname}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-gray-700 text-sm font-medium">
+                      Capacity
+                    </label>
+                    <input
+                      type="number"
+                      name="capacity"
+                      value={formData.capacity}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
+                      required
+                      min="1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-gray-700 text-sm font-medium">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-gray-700 text-sm font-medium">
+                      Features
+                    </label>
+                    <textarea
+                      name="features"
+                      value={formData.features}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
+                      rows="3"
+                    />
+                  </div>
+                  <div className="flex items-center justify-end space-x-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm font-medium transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

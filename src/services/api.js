@@ -270,6 +270,17 @@ const getAllClassrooms = async () => {
   return data;
 };
 
+const getClassroomById = async (classroomId) => {
+  const { data, error } = await supabase
+    .from("classrooms")
+    .select("*")
+    .eq("id", classroomId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 const addClassroom = async (classroom) => {
   const { data, error } = await supabase.from("classrooms").insert(classroom);
 
@@ -300,12 +311,20 @@ const deleteClassroom = async (classroomId) => {
 const getAllExams = async () => {
   const { data, error } = await supabase
     .from("exams")
-    .select("*, classrooms(*)")
+    .select("*")
     .order("date", { ascending: true });
 
   if (error) throw new Error(error.message);
   return data;
 };
+
+const getAllBranches = async () => {
+  const { data, error } = await supabase.from("branches").select("*");
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 
 const getExamById = async (examId) => {
   const { data, error } = await supabase
@@ -420,6 +439,7 @@ export const adminService = {
 
   // Classroom management
   getAllClassrooms,
+  getClassroomById, // Add this function to the exports
   addClassroom,
   updateClassroom,
   deleteClassroom,
@@ -430,6 +450,7 @@ export const adminService = {
   addExam,
   updateExam,
   deleteExam,
+  getAllBranches,
 
   // Seating management
   getSeatingArrangementByExam,
@@ -437,6 +458,7 @@ export const adminService = {
   updateSeatingArrangement,
   deleteSeatingArrangement,
   getEligibleStudentsForExam,
+  generateSeatingArrangement, // Add the new function
 
   // Invigilation management
   getAllInvigilationDuties,

@@ -28,10 +28,10 @@ const Sidebar = () => {
     : "";
 
   return (
-    <div className="w-72 bg-white">
+    <div className=" h-screen w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto ">
       <div className="p-6">
         <h2 className="text-2xl font-bold text-black">ExamCell</h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-sm mt-1">
           {role === "admin"
             ? "Admin Portal"
             : role === "faculty"
@@ -39,7 +39,7 @@ const Sidebar = () => {
             : "Student Portal"}
         </p>
       </div>
-      <nav className="mt-6 flex flex-col h-[calc(100%-96px)]">
+      <nav className="mt-2 flex flex-col h-[calc(100vh-150px)]">
         {/* Common link for all roles */}
         <Link to={`/${role}`}>
           <SidebarItem
@@ -74,7 +74,7 @@ const Sidebar = () => {
                 active={path.startsWith(`/${role}/classrooms`)}
               />
             </Link>
-            <Link to={`/${role}/seating`}>  
+            <Link to={`/${role}/seating`}>
               <SidebarItem
                 icon={<ClipboardList size={20} />}
                 text="Seating Plans"
@@ -124,7 +124,7 @@ const Sidebar = () => {
             active={path === `/${role}/settings`}
           />
         </Link>
-        <div className="mt-auto">
+        <div className="mt-auto mb-6">
           <Link to={`/${role}/logout`}>
             <SidebarItem icon={<LogOut size={20} />} text="Logout" />
           </Link>
@@ -139,17 +139,19 @@ const SidebarItem = ({ icon, text, active, className }) => {
   return (
     <div
       className={`
-        flex items-center px-6 py-3 cursor-pointer
+        flex items-center px-6 py-3 cursor-pointer transition-all duration-200
         ${
           active
-            ? "bg-gray-100 text-black border-r-4 border-black"
-            : "text-gray-600 hover:bg-gray-50"
+            ? "bg-gray-100 text-gray-900 font-medium border-r-4 border-gray-900"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
         }
         ${className || ""}
       `}
     >
-      <div className="mr-3">{icon}</div>
-      <span>{text}</span>
+      <div className={`mr-3 ${active ? "text-gray-900" : "text-gray-500"}`}>
+        {icon}
+      </div>
+      <span className="text-sm">{text}</span>
     </div>
   );
 };

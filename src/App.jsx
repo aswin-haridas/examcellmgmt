@@ -19,6 +19,7 @@ import UserManagement from "./pages/UserManagement";
 import AdminExamManagement from "./pages/AdminExamManagement";
 import AdminSeatingPlan from "./pages/AdminSeatingPlan";
 import ClassroomManagement from "./pages/ClassroomManagement";
+import ArrangeSeats from "./pages/ArrangeSeats";
 
 function App() {
   return (
@@ -57,7 +58,7 @@ function App() {
               <Route path="users" element={<UserManagement />} />
               <Route path="exams" element={<AdminExamManagement />} />
               <Route path="classrooms" element={<ClassroomManagement />} />
-              <Route path="seating" element={<div>Seating Plans</div>} />
+              <Route path="seating" element={<SeatingArr />} />
               <Route path="seating/:examId" element={<AdminSeatingPlan />} />
               <Route
                 path="invigilation"
@@ -67,6 +68,13 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="logout" element={<LogoutPage />} />
             </Route>
+
+            {/* New Routes */}
+            <Route path="/seating-arrangement" element={<SeatingArr />} />
+            <Route
+              path="/arrange-seats/:classroomId"
+              element={<ArrangeSeats />}
+            />
           </Routes>
         </Router>
       </div>
