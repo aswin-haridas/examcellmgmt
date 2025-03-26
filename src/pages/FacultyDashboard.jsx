@@ -186,7 +186,7 @@ const FacultyDashboard = () => {
                         <strong>Venue:</strong> {duty.venue}
                       </p>
                       <div className="mt-2">
-                        <button className="text-sm text-blue-600 hover:underline">
+                        <button className="text-sm text-black hover:underline">
                           View Details
                         </button>
                       </div>

@@ -12,8 +12,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Use routes
-app.use(routes);
 
 // Simple route for testing
 app.get("/", (req, res) => {

@@ -307,6 +307,17 @@ const getAllExams = async () => {
   return data;
 };
 
+const getExamById = async (examId) => {
+  const { data, error } = await supabase
+    .from("exams")
+    .select("*, classrooms(*)")
+    .eq("id", examId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
 const updateExam = async (examId, examData) => {
   const { data, error } = await supabase
     .from("exams")
@@ -322,6 +333,47 @@ const deleteExam = async (examId) => {
     .from("exams")
     .delete()
     .eq("id", examId);
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const getSeatingArrangementByExam = async (examId) => {
+  const { data, error } = await supabase
+    .from("seating_arrangement")
+    .select("*, users(*)")
+    .eq("exam_id", examId);
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const updateSeatingArrangement = async (seatingId, seatingData) => {
+  const { data, error } = await supabase
+    .from("seating_arrangement")
+    .update(seatingData)
+    .eq("id", seatingId);
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const deleteSeatingArrangement = async (seatingId) => {
+  const { data, error } = await supabase
+    .from("seating_arrangement")
+    .delete()
+    .eq("id", seatingId);
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const getEligibleStudentsForExam = async (examId) => {
+  // Get students registered for this exam or in the relevant course
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("role", "student");
 
   if (error) throw new Error(error.message);
   return data;
@@ -374,15 +426,22 @@ export const adminService = {
 
   // Exam management
   getAllExams,
+  getExamById,
   addExam,
   updateExam,
   deleteExam,
+
+  // Seating management
+  getSeatingArrangementByExam,
+  addSeatingArrangement,
+  updateSeatingArrangement,
+  deleteSeatingArrangement,
+  getEligibleStudentsForExam,
 
   // Invigilation management
   getAllInvigilationDuties,
   assignInvigilationDuties,
 
   // Admin can use these as well
-  addSeatingArrangement,
   addInvigilationDuty,
 };

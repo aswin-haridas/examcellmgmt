@@ -57,35 +57,35 @@ const Sidebar = () => {
               <SidebarItem
                 icon={<Users size={20} />}
                 text="User Management"
-                active={path === `/${role}/users`}
+                active={path.startsWith(`/${role}/users`)}
               />
             </Link>
             <Link to={`/${role}/exams`}>
               <SidebarItem
                 icon={<FileText size={20} />}
                 text="Exam Management"
-                active={path === `/${role}/exams`}
+                active={path.startsWith(`/${role}/exams`)}
               />
             </Link>
             <Link to={`/${role}/classrooms`}>
               <SidebarItem
                 icon={<Building size={20} />}
                 text="Classrooms"
-                active={path === `/${role}/classrooms`}
+                active={path.startsWith(`/${role}/classrooms`)}
               />
             </Link>
             <Link to={`/${role}/seating`}>
               <SidebarItem
                 icon={<ClipboardList size={20} />}
                 text="Seating Plans"
-                active={path === `/${role}/seating`}
+                active={path.startsWith(`/${role}/seating`)}
               />
             </Link>
             <Link to={`/${role}/invigilation`}>
               <SidebarItem
                 icon={<CalendarIcon size={20} />}
                 text="Invigilation Duties"
-                active={path === `/${role}/invigilation`}
+                active={path.startsWith(`/${role}/invigilation`)}
               />
             </Link>
           </>
@@ -96,7 +96,7 @@ const Sidebar = () => {
               <SidebarItem
                 icon={<CalendarIcon size={20} />}
                 text="Exam Schedule"
-                active={path === `/${role}/exam-schedule`}
+                active={path.startsWith(`/${role}/exam-schedule`)}
               />
             </Link>
             <Link to={`/${role}/notifications`}>

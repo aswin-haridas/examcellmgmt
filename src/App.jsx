@@ -15,6 +15,9 @@ import SettingsPage from "./pages/SettingsPage";
 import LogoutPage from "./pages/auth/LogoutPage";
 import SeatingArr from "./pages/SeatingArrangement";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserManagement from "./pages/UserManagement";
+import AdminExamManagement from "./pages/AdminExamManagement";
+import AdminSeatingPlan from "./pages/AdminSeatingPlan";
 
 function App() {
   return (
@@ -50,11 +53,22 @@ function App() {
             {/* Admin Routes */}
             <Route path="/admin">
               <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="exams" element={<AdminExamManagement />} />
+              <Route
+                path="classrooms"
+                element={<div>Classroom Management</div>}
+              />
+              <Route path="seating" element={<div>Seating Plans</div>} />
+              <Route path="seating/:examId" element={<AdminSeatingPlan />} />
+              <Route
+                path="invigilation"
+                element={<div>Invigilation Duties</div>}
+              />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="logout" element={<LogoutPage />} />
             </Route>
-
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </div>

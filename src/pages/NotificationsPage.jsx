@@ -64,7 +64,7 @@ const NotificationsPage = () => {
               >
                 <div
                   className={`w-2 h-2 rounded-full mt-2 ${
-                    !notification.read ? "bg-blue-600" : "bg-gray-300"
+                    !notification.read ? "bg-black" : "bg-gray-300"
                   }`}
                 ></div>
                 <div className="ml-3 flex-1">

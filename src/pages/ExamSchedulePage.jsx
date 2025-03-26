@@ -2,45 +2,6 @@ import React from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 
-const exams = [
-  {
-    id: 1,
-    subject: "Mathematics",
-    course: "MATH201",
-    date: "2023-11-15",
-    time: "10:00 AM - 12:00 PM",
-    venue: "Hall A",
-    type: "Mid-Term",
-  },
-  {
-    id: 2,
-    subject: "Computer Science",
-    course: "CS101",
-    date: "2023-11-18",
-    time: "02:00 PM - 04:00 PM",
-    venue: "Lab 3",
-    type: "Practical",
-  },
-  {
-    id: 3,
-    subject: "Physics",
-    course: "PHY101",
-    date: "2023-11-22",
-    time: "09:00 AM - 11:00 AM",
-    venue: "Hall B",
-    type: "Final",
-  },
-  {
-    id: 4,
-    subject: "English",
-    course: "ENG102",
-    date: "2023-11-25",
-    time: "01:00 PM - 03:00 PM",
-    venue: "Hall C",
-    type: "Final",
-  },
-];
-
 const ExamSchedulePage = () => {
   const navigate = useNavigate();
 
