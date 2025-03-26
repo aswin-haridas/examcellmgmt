@@ -5,15 +5,16 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { LoginPage } from "./pages/LoginPage";
+import { LoginPage } from "./pages/auth/LoginPage";
 import { StudentDashboard } from "./pages/StudentDashboard";
 import CoursesPage from "./pages/CoursesPage";
 import ExamSchedulePage from "./pages/ExamSchedulePage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
-import LogoutPage from "./pages/LogoutPage";
+import LogoutPage from "./pages/auth/LogoutPage";
 import SeatingArr from "./pages/SeatingArrangement";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -48,7 +49,7 @@ function App() {
 
             {/* Admin Routes */}
             <Route path="/admin">
-              <Route index element={<AdminDashboard/>}/>
+              <Route index element={<AdminDashboard />} />
               <Route path="logout" element={<LogoutPage />} />
             </Route>
 

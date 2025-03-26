@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Snackbar, Alert } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-import { authService } from "../services/api";
-import Sidebar from "../components/Sidebar";
+import { authService } from "../../services/api";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
