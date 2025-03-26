@@ -6,9 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { LoginPage } from "./pages/LoginPage";
-import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { StudentDashboard } from "./pages/StudentDashboard";
-import Layout from "./components/Layout";
 import CoursesPage from "./pages/CoursesPage";
 import ExamSchedulePage from "./pages/ExamSchedulePage";
 import NotificationsPage from "./pages/NotificationsPage";
@@ -27,10 +25,9 @@ function App() {
           <Routes>
             {/* Auth Routes */}
             <Route path="/" element={<LoginPage />} />
-            <Route path="/admin-login" element={<AdminLoginPage />} />
 
             {/* Student Routes */}
-            <Route path="/student" element={<Layout />}>
+            <Route path="/student">
               <Route index element={<StudentDashboard />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="exam-schedule" element={<ExamSchedulePage />} />
@@ -41,8 +38,8 @@ function App() {
               <Route path="logout" element={<LogoutPage />} />
             </Route>
 
-            {/* Faculty Routes - can add additional faculty specific pages */}
-            <Route path="/faculty" element={<Layout />}>
+            {/* Faculty Routes */}
+            <Route path="/faculty">
               <Route index element={<div>Faculty Dashboard</div>} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
@@ -50,8 +47,8 @@ function App() {
             </Route>
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<Layout />}>
-              <Route index element={<div>Admin Dashboard</div>} />
+            <Route path="/admin">
+              <Route index element={<AdminDashboard/>}/>
               <Route path="logout" element={<LogoutPage />} />
             </Route>
 

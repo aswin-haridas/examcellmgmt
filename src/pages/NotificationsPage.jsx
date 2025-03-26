@@ -1,4 +1,5 @@
 import React from "react";
+import Sidebar from "../components/Sidebar"; // Added import for Sidebar
 
 const notifications = [
   {
@@ -35,56 +36,61 @@ const notifications = [
 
 const NotificationsPage = () => {
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Notifications</h1>
+    <div className="flex">
+      <Sidebar /> {/* Added Sidebar */}
+      <div className="flex-1 p-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Notifications</h1>
 
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">All Notifications</h3>
-            <p className="text-sm text-gray-500">
-              Stay updated with important announcements
-            </p>
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">All Notifications</h3>
+              <p className="text-sm text-gray-500">
+                Stay updated with important announcements
+              </p>
+            </div>
+            <button className="text-sm text-gray-600 hover:text-gray-900">
+              Mark all as read
+            </button>
           </div>
-          <button className="text-sm text-gray-600 hover:text-gray-900">
-            Mark all as read
-          </button>
-        </div>
 
-        <div className="divide-y divide-gray-200">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-4 flex items-start ${
-                !notification.read ? "bg-gray-50" : ""
-              }`}
-            >
+          <div className="divide-y divide-gray-200">
+            {notifications.map((notification) => (
               <div
-                className={`w-2 h-2 rounded-full mt-2 ${
-                  !notification.read ? "bg-blue-600" : "bg-gray-300"
+                key={notification.id}
+                className={`p-4 flex items-start ${
+                  !notification.read ? "bg-gray-50" : ""
                 }`}
-              ></div>
-              <div className="ml-3 flex-1">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium">{notification.title}</h4>
-                  <span className="text-xs text-gray-500">
-                    {notification.date}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-gray-600">
-                  {notification.message}
-                </p>
-                <div className="mt-2 flex space-x-2">
-                  <button className="text-xs text-gray-600 hover:text-gray-900">
-                    Mark as {notification.read ? "unread" : "read"}
-                  </button>
-                  <button className="text-xs text-gray-600 hover:text-gray-900">
-                    Delete
-                  </button>
+              >
+                <div
+                  className={`w-2 h-2 rounded-full mt-2 ${
+                    !notification.read ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                ></div>
+                <div className="ml-3 flex-1">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-medium">
+                      {notification.title}
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      {notification.date}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {notification.message}
+                  </p>
+                  <div className="mt-2 flex space-x-2">
+                    <button className="text-xs text-gray-600 hover:text-gray-900">
+                      Mark as {notification.read ? "unread" : "read"}
+                    </button>
+                    <button className="text-xs text-gray-600 hover:text-gray-900">
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
