@@ -74,7 +74,7 @@ const Sidebar = () => {
                 active={path.startsWith(`/${role}/classrooms`)}
               />
             </Link>
-            <Link to={`/${role}/seating`}>
+            <Link to={`/${role}/seating`}>  
               <SidebarItem
                 icon={<ClipboardList size={20} />}
                 text="Seating Plans"

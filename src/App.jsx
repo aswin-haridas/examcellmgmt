@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserManagement from "./pages/UserManagement";
 import AdminExamManagement from "./pages/AdminExamManagement";
 import AdminSeatingPlan from "./pages/AdminSeatingPlan";
+import ClassroomManagement from "./pages/ClassroomManagement";
 
 function App() {
   return (
@@ -55,10 +56,7 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="exams" element={<AdminExamManagement />} />
-              <Route
-                path="classrooms"
-                element={<div>Classroom Management</div>}
-              />
+              <Route path="classrooms" element={<ClassroomManagement />} />
               <Route path="seating" element={<div>Seating Plans</div>} />
               <Route path="seating/:examId" element={<AdminSeatingPlan />} />
               <Route

@@ -262,7 +262,7 @@ const AdminDashboard = () => {
             <h3 className="text-lg font-semibold">Quick Actions</h3>
           </div>
           <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/admin/seating">
+            <Link to="/admin/classrooms">
               <div className="border border-gray-200 rounded-md p-4 hover:bg-gray-50 cursor-pointer">
                 <h4 className="font-medium">Manage Seating Plans</h4>
                 <p className="text-sm text-gray-500">

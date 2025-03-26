@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { adminService } from "../services/api";
-import { AdminSidebar } from "../components/AdminSidebar";
 import Sidebar from "../components/Sidebar";
 
 const AdminSeatingPlan = () => {
@@ -108,17 +107,27 @@ const AdminSeatingPlan = () => {
 
         {exam && (
           <div className="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">Exam Details</h2>
-            <p className="text-gray-700">Date: {new Date(exam.date).toLocaleDateString()}</p>
+            <h2 className="text-lg font-semibold text-gray-800">
+              Exam Details
+            </h2>
+            <p className="text-gray-700">
+              Date: {new Date(exam.date).toLocaleDateString()}
+            </p>
             <p className="text-gray-700">Time: {exam.time}</p>
-            <p className="text-gray-700">Venue: {exam.classrooms?.classname || "Not assigned"}</p>
+            <p className="text-gray-700">
+              Venue: {exam.classrooms?.classname || "Not assigned"}
+            </p>
             <p className="text-gray-700">Duration: {exam.duration} minutes</p>
-            <p className="text-gray-700">Capacity: {exam.classrooms?.capacity || "N/A"} seats</p>
+            <p className="text-gray-700">
+              Capacity: {exam.classrooms?.capacity || "N/A"} seats
+            </p>
           </div>
         )}
 
         <div className="bg-white p-4 rounded-lg shadow mb-6 border border-gray-200">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Add New Seating</h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Add New Seating
+          </h2>
           <form onSubmit={handleAddSeat} className="flex flex-wrap gap-4">
             <div className="w-full md:w-1/3">
               <label className="block mb-1 text-gray-700">Student</label>
@@ -153,7 +162,7 @@ const AdminSeatingPlan = () => {
                 type="number"
                 value={rowNumber}
                 onChange={(e) => setRowNumber(e.target.value)}
-                className="w-full border rounded p-2"
+                className="w-full border border-gray-300 rounded p-2"
                 min="1"
               />
             </div>
@@ -161,7 +170,7 @@ const AdminSeatingPlan = () => {
             <div className="w-full md:w-1/6 flex items-end">
               <button
                 type="submit"
-                className="bg-black text-white px-4 py-2 rounded"
+                className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded transition-colors"
               >
                 Add Seat
               </button>
@@ -169,8 +178,8 @@ const AdminSeatingPlan = () => {
           </form>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
             Current Seating Arrangement
           </h2>
           {seatingArrangements.length === 0 ? (
@@ -179,33 +188,45 @@ const AdminSeatingPlan = () => {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white">
+              <table className="min-w-full bg-white border border-gray-200">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="py-2 px-4 border-b text-left">Student</th>
-                    <th className="py-2 px-4 border-b text-left">
+                    <th className="py-2 px-4 border-b border-gray-200 text-left text-gray-700">
+                      Student
+                    </th>
+                    <th className="py-2 px-4 border-b border-gray-200 text-left text-gray-700">
                       Roll Number
                     </th>
-                    <th className="py-2 px-4 border-b text-left">
+                    <th className="py-2 px-4 border-b border-gray-200 text-left text-gray-700">
                       Seat Number
                     </th>
-                    <th className="py-2 px-4 border-b text-left">Row Number</th>
-                    <th className="py-2 px-4 border-b text-left">Actions</th>
+                    <th className="py-2 px-4 border-b border-gray-200 text-left text-gray-700">
+                      Row Number
+                    </th>
+                    <th className="py-2 px-4 border-b border-gray-200 text-left text-gray-700">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {seatingArrangements.map((seat) => (
                     <tr key={seat.id} className="hover:bg-gray-50">
-                      <td className="py-2 px-4 border-b">{seat.users?.name}</td>
-                      <td className="py-2 px-4 border-b">
+                      <td className="py-2 px-4 border-b border-gray-200 text-gray-800">
+                        {seat.users?.name}
+                      </td>
+                      <td className="py-2 px-4 border-b border-gray-200 text-gray-800">
                         {seat.users?.roll_number}
                       </td>
-                      <td className="py-2 px-4 border-b">{seat.seat_number}</td>
-                      <td className="py-2 px-4 border-b">{seat.row_number}</td>
-                      <td className="py-2 px-4 border-b">
+                      <td className="py-2 px-4 border-b border-gray-200 text-gray-800">
+                        {seat.seat_number}
+                      </td>
+                      <td className="py-2 px-4 border-b border-gray-200 text-gray-800">
+                        {seat.row_number}
+                      </td>
+                      <td className="py-2 px-4 border-b border-gray-200">
                         <button
                           onClick={() => handleDeleteSeat(seat.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-gray-700 hover:text-gray-900 underline"
                         >
                           Delete
                         </button>
