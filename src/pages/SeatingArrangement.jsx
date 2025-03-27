@@ -121,7 +121,6 @@ const SeatingArrangement = () => {
               </div>
             </>
           )}
-          {/* Removed the modal code since we're navigating to a separate page now */}
         </div>
       </div>
     </div>

@@ -320,11 +320,11 @@ const getAllExams = async () => {
 
 const getAllBranches = async () => {
   const { data, error } = await supabase.from("branches").select("*");
+  console.log(data);
 
   if (error) throw new Error(error.message);
   return data;
 };
-
 
 const getExamById = async (examId) => {
   const { data, error } = await supabase
@@ -387,16 +387,6 @@ const deleteSeatingArrangement = async (seatingId) => {
   return data;
 };
 
-const getEligibleStudentsForExam = async (examId) => {
-  // Get students registered for this exam or in the relevant course
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("role", "student");
-
-  if (error) throw new Error(error.message);
-  return data;
-};
 
 const getAllInvigilationDuties = async () => {
   const { data, error } = await supabase
@@ -457,8 +447,6 @@ export const adminService = {
   addSeatingArrangement,
   updateSeatingArrangement,
   deleteSeatingArrangement,
-  getEligibleStudentsForExam,
-  generateSeatingArrangement, // Add the new function
 
   // Invigilation management
   getAllInvigilationDuties,
