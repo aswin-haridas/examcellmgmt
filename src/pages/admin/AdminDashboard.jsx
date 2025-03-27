@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { adminService } from "../services/api";
-import Sidebar from "../components/Sidebar";
+import { adminService } from "../../services/api";
+import Sidebar from "../../components/Sidebar";
 import { Link } from "react-router-dom";
 
 // Extract ExamTable component to simplify the main component

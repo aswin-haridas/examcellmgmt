@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Snackbar, Alert } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
-import { authService } from "../../services/api";
+import { login } from "../../services/auth";
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -20,14 +20,14 @@ export const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const user = await authService.login(email, password);
+      const user = await login(email, password);
       console.log("User logged in successfully", user);
       const path =
         user.role === "admin"
-          ? "/admin"
+          ? "/admin-dashboard"
           : user.role === "faculty"
-          ? "/faculty"
-          : "/student";
+          ? "/faculty-dashboard"
+          : "/student-dashboard";
       localStorage.setItem("loggedIn", "true");
       navigate(path);
     } catch (error) {

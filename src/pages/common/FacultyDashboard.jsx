@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { facultyService } from "../services/api";
-import Sidebar from "../components/Sidebar";
+import { facultyService } from "../../services/auth";
+import Sidebar from "../../components/Sidebar";
 
 const FacultyDashboard = () => {
   const [availableDates, setAvailableDates] = useState([]);

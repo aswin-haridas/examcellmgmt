@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { adminService } from "../services/api";
-import Sidebar from "../components/Sidebar";
+import { adminService } from "../../services/auth";
+import Sidebar from "../../components/Sidebar";
 
 const AdminSeatingPlan = () => {
   const { examId } = useParams();

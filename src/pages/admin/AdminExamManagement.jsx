@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../../components/Sidebar";
 import { useNavigate } from "react-router-dom";
-import { adminService } from "../services/api";
+import { adminService } from "../../services/auth";
 
 const AdminExamManagement = () => {
   const navigate = useNavigate();

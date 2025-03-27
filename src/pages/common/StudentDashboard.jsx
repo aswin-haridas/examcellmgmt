@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { studentService } from "../services/api";
-import Sidebar from "../components/Sidebar";
+import { studentService } from "../../services/auth";
+import Sidebar from "../../components/Sidebar";
 
 export const StudentDashboard = () => {
   const [date, setDate] = useState(new Date());
