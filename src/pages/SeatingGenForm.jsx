@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import supabase from "../services/supabase";
 import { generateSeatingArr } from "../services/generateSeatingArr";
-import SeatingArrangement from "./seatingArrangement";
 
 const SeatingGenForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Define fixed branches
-  const BRANCHES = [
-    { code: "CSE", name: "Computer Science Engineering" },
-    { code: "ECE", name: "Electronics & Communication Engineering" },
-  ];
+  // Define fixed branches - moved outside component for better performance
+  const BRANCHES = useMemo(
+    () => [
+      { code: "CSE", name: "Computer Science Engineering" },
+      { code: "ECE", name: "Electronics & Communication Engineering" },
+    ],
+    []
+  );
 
   const [form, setForm] = useState({
     classrooms: [],
@@ -26,15 +28,17 @@ const SeatingGenForm = () => {
     classroomName: "",
   });
   const [processing, setProcessing] = useState(false);
+  const [loadingExams, setLoadingExams] = useState({
+    branch1: false,
+    branch2: false,
+  });
   const [status, setStatus] = useState({ type: "", message: "" });
-  const [seatingData, setSeatingData] = useState([]);
-  const [showArrangement, setShowArrangement] = useState(false);
 
   const updateForm = useCallback((updates) => {
     setForm((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Fetch classrooms on component mount
+  // Fetch classrooms on component mount - used once
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,7 +80,7 @@ const SeatingGenForm = () => {
     fetchData();
   }, [id, updateForm]);
 
-  // Fetch exams for a branch (CSE or ECE)
+  // Fetch exams for a branch (CSE or ECE) - memoized
   const fetchExams = useCallback(
     async (branch, branchNum) => {
       if (!branch) {
@@ -89,6 +93,12 @@ const SeatingGenForm = () => {
       }
 
       try {
+        // Set loading state for the specific branch
+        setLoadingExams((prev) => ({
+          ...prev,
+          [branchNum === 1 ? "branch1" : "branch2"]: true,
+        }));
+
         // Fetch exams for the selected branch
         const { data: examsData, error: examsError } = await supabase
           .from("exams")
@@ -119,6 +129,12 @@ const SeatingGenForm = () => {
         updateForm(
           branchNum === 1 ? { branch1Exams: [] } : { branch2Exams: [] }
         );
+      } finally {
+        // Clear loading state
+        setLoadingExams((prev) => ({
+          ...prev,
+          [branchNum === 1 ? "branch1" : "branch2"]: false,
+        }));
       }
     },
     [updateForm]
@@ -148,17 +164,38 @@ const SeatingGenForm = () => {
     setStatus({ type: "", message: "" });
 
     try {
-      // Generate the seating arrangement
-      const result = await generateSeatingArrangement(
+      // Generate the seating arrangement - passes the exam IDs which are still needed for tracking purposes
+      const result = await generateSeatingArr({
         examId1,
         examId2,
         classroomId,
         branch1,
-        branch2
-      );
+        branch2,
+        classroomName: form.classroomName,
+      });
 
-      setSeatingData(result.data || []);
-      setShowArrangement(true);
+      if (!result) {
+        throw new Error(
+          "No response received from seating arrangement generation"
+        );
+      }
+
+      if (result.success) {
+        // Display success message briefly, then navigate to the classroom details page
+        setStatus({
+          type: "success",
+          message: "Seating arrangement generated and saved successfully!",
+        });
+
+        // Navigate to classroom page after a short delay to show the success message
+        setTimeout(() => {
+          navigate(`/classrooms/class/${classroomId}`);
+        }, 1000);
+      } else {
+        throw new Error(
+          result.message || "Failed to generate seating arrangement"
+        );
+      }
     } catch (error) {
       console.error("Error generating arrangement:", error);
       setStatus({
@@ -172,84 +209,70 @@ const SeatingGenForm = () => {
     }
   };
 
-  // Helper function to generate seating arrangement
-  const generateSeatingArrangement = async (
-    examId1,
-    examId2,
-    classroomId,
-    branch1,
-    branch2
-  ) => {
-    const result = await generateSeatingArr({
-      examId1,
-      examId2,
-      classroomId,
-      branch1,
-      branch2,
-      classroomName: form.classroomName,
-    });
-
-    if (!result) {
-      throw new Error(
-        "No response received from seating arrangement generation"
-      );
-    }
-
-    if (!result.success) {
-      throw new Error(
-        result.message || "Failed to generate seating arrangement"
-      );
-    }
-
-    return result;
-  };
-
-  // Reusable select component
-  const Select = ({
-    label,
-    value,
-    onChange,
-    options,
-    placeholder = `Select ${label}`,
-    valueField = "code", // Add valueField parameter with default "code"
-    displayField = "name", // Add displayField parameter with default "name"
-  }) => (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={onChange}
-        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-        required
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option[valueField]} value={option[valueField]}>
-            {option[displayField]}
-          </option>
-        ))}
-      </select>
-    </div>
+  // Reusable select component - memoized to prevent unnecessary re-renders
+  const Select = React.memo(
+    ({
+      label,
+      value,
+      onChange,
+      options,
+      placeholder = `Select ${label}`,
+      valueField = "code",
+      displayField = "name",
+      isLoading = false,
+      disabled = false,
+    }) => (
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label}
+        </label>
+        <div className="relative">
+          <select
+            value={value}
+            onChange={onChange}
+            className={`w-full p-3 border border-gray-300 rounded-md ${
+              disabled || isLoading
+                ? "bg-gray-100 cursor-not-allowed"
+                : "focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            } transition-colors`}
+            required
+            disabled={disabled || isLoading}
+          >
+            <option value="">{isLoading ? "Loading..." : placeholder}</option>
+            {options.map((option) => (
+              <option key={option[valueField]} value={option[valueField]}>
+                {option[displayField]}
+              </option>
+            ))}
+          </select>
+          {isLoading && (
+            <div className="absolute right-3 top-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   );
 
-  // Status message component
-  const StatusMessage = () =>
-    status.message && (
-      <div
-        className={`p-4 mb-6 rounded-md flex items-center ${
-          status.type === "success"
-            ? "bg-green-50 text-green-700 border-l-4 border-green-500"
-            : "bg-red-50 text-red-700 border-l-4 border-red-500"
-        }`}
-      >
-        <span className="material-icons mr-2">
-          {status.type === "success" ? "check_circle" : "error"}
-        </span>
-        {status.message}
-      </div>
-    );
+  // Status message component - memoized
+  const StatusMessage = React.memo(
+    () =>
+      status.message && (
+        <div
+          className={`p-4 mb-6 rounded-md flex items-center ${
+            status.type === "success"
+              ? "bg-green-50 text-green-700 border-l-4 border-green-500"
+              : "bg-red-50 text-red-700 border-l-4 border-red-500"
+          }`}
+        >
+          <span className="material-icons mr-2">
+            {status.type === "success" ? "check_circle" : "error"}
+          </span>
+          {status.message}
+        </div>
+      )
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -284,6 +307,7 @@ const SeatingGenForm = () => {
               options={BRANCHES}
               valueField="code"
               displayField="name"
+              disabled={processing}
             />
 
             <Select
@@ -293,6 +317,8 @@ const SeatingGenForm = () => {
               options={form.branch1Exams}
               valueField="code"
               displayField="name"
+              isLoading={loadingExams.branch1}
+              disabled={!form.branch1 || processing}
             />
 
             <Select
@@ -306,6 +332,7 @@ const SeatingGenForm = () => {
               options={BRANCHES}
               valueField="code"
               displayField="name"
+              disabled={processing}
             />
 
             <Select
@@ -315,6 +342,8 @@ const SeatingGenForm = () => {
               options={form.branch2Exams}
               valueField="code"
               displayField="name"
+              isLoading={loadingExams.branch2}
+              disabled={!form.branch2 || processing}
             />
           </div>
 
@@ -363,20 +392,8 @@ const SeatingGenForm = () => {
           </div>
         </form>
       </div>
-
-      {showArrangement && (
-        <div className="mt-10 bg-white p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">
-            Generated Seating Arrangement
-          </h2>
-          <SeatingArrangement
-            allocatedSeats={seatingData}
-            classroomId={form.classroomId}
-          />
-        </div>
-      )}
     </div>
   );
 };
 
-export default SeatingGenForm;
+export default React.memo(SeatingGenForm);

@@ -1,13 +1,38 @@
 import React from "react";
 
 const Legend = ({ seatingData }) => {
+  // Return null if no seating data or empty array
   if (!seatingData || seatingData.length === 0) return null;
 
   const uniqueBranches = new Set();
-  seatingData.forEach((seat) => {
-    if (seat.left_student) uniqueBranches.add(seat.left_student.branch);
-    if (seat.right_student) uniqueBranches.add(seat.right_student.branch);
-  });
+
+  // Check if seatingData is an array before calling forEach
+  if (Array.isArray(seatingData)) {
+    seatingData.forEach((seat) => {
+      if (seat && seat.left_student)
+        uniqueBranches.add(seat.left_student.branch);
+      if (seat && seat.right_student)
+        uniqueBranches.add(seat.right_student.branch);
+    });
+  } else if (seatingData.seating && Array.isArray(seatingData.seating)) {
+    // If seatingData has a nested seating property that is an array
+    seatingData.seating.forEach((seat) => {
+      if (seat && seat.left_student)
+        uniqueBranches.add(seat.left_student.branch);
+      if (seat && seat.right_student)
+        uniqueBranches.add(seat.right_student.branch);
+    });
+  } else {
+    // If we can't process the data, return null instead of erroring
+    console.warn(
+      "Invalid seatingData format in Legend component:",
+      seatingData
+    );
+    return null;
+  }
+
+  // If no branches found, return null
+  if (uniqueBranches.size === 0) return null;
 
   const branchColors = [
     { branch: [...uniqueBranches][0], color: "blue" },
