@@ -9,17 +9,47 @@ const Dashboard = () => {
   const [toDateFilter, setToDateFilter] = useState("");
   const [branches, setBranches] = useState(["All"]);
   const [filteredExams, setFilteredExams] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+  const [userBranch, setUserBranch] = useState(null);
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const userDataString = localStorage.getItem("user");
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString);
+        setUserRole(userData.role);
+
+        if (userData.role === "student") {
+          setUserBranch(userData.branch);
+          setBranchFilter(userData.branch);
+        }
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase.from("exams").select("*");
+        let query = supabase.from("exams").select("*");
+
+        // If user is a student, only fetch exams for their branch
+        if (userRole === "student" && userBranch) {
+          query = query.eq("branch", userBranch);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         setExams(data || []);
 
-        const uniqueBranches = [...new Set(data.map((exam) => exam.branch))];
-        setBranches(["All", ...uniqueBranches]);
+        // Only show branch filter options for admin/faculty
+        if (userRole !== "student") {
+          const uniqueBranches = [...new Set(data.map((exam) => exam.branch))];
+          setBranches(["All", ...uniqueBranches]);
+        }
       } catch (error) {
         console.error("Error fetching exams:", error);
       } finally {
@@ -27,7 +57,7 @@ const Dashboard = () => {
       }
     };
     fetchExams();
-  }, []);
+  }, [userRole, userBranch]);
 
   useEffect(() => {
     let filtered = [...exams];
@@ -61,26 +91,29 @@ const Dashboard = () => {
         ) : (
           <>
             <div className="mb-6 bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
-              <div className="flex flex-col">
-                <label
-                  htmlFor="branchFilter"
-                  className="text-sm text-gray-600 mb-1"
-                >
-                  Filter by Branch:
-                </label>
-                <select
-                  id="branchFilter"
-                  value={branchFilter}
-                  onChange={(e) => setBranchFilter(e.target.value)}
-                  className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {branches.map((branch) => (
-                    <option key={branch} value={branch}>
-                      {branch}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Only show branch filter for admin/faculty */}
+              {userRole !== "student" && (
+                <div className="flex flex-col">
+                  <label
+                    htmlFor="branchFilter"
+                    className="text-sm text-gray-600 mb-1"
+                  >
+                    Filter by Branch:
+                  </label>
+                  <select
+                    id="branchFilter"
+                    value={branchFilter}
+                    onChange={(e) => setBranchFilter(e.target.value)}
+                    className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {branches.map((branch) => (
+                      <option key={branch} value={branch}>
+                        {branch}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="flex flex-col">
                 <label

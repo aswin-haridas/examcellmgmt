@@ -213,6 +213,18 @@ export const generateSeatingArr = async ({
       );
     }
 
+    // Update the exam table to associate the classroom with the selected exams
+    const { error: examUpdateError } = await supabase
+      .from("exams")
+      .update({ classroom_id: classroomId })
+      .in("id", [examId1, examId2]);
+
+    if (examUpdateError) {
+      throw new Error(
+        `Failed to update exams with classroom ID: ${examUpdateError.message}`
+      );
+    }
+
     return {
       success: true,
       data: {

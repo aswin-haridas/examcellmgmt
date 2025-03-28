@@ -26,8 +26,9 @@ const LoginPage = () => {
     try {
       const user = await login(formData.email, formData.password);
 
-      // Set loggedIn flag to true
+      // Set loggedIn flag to true and store user details
       localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("role", user.role);
 
       // Map user role directly to route path
       const paths = {

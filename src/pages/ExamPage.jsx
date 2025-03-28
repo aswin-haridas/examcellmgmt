@@ -1,17 +1,33 @@
 import { useState, useEffect } from "react";
 import supabase from "../services/supabase";
+import useVerifyUser from "../services/useVerifyUser";
 
 const ExamPage = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [invigilationStatus, setInvigilationStatus] = useState({
+    message: "",
+    type: "",
+    examId: null,
+  });
+  const userRole = useVerifyUser(); // Get user role
 
   useEffect(() => {
     const getExams = async () => {
       try {
+        // Fetch exams with invigilation and faculty data
         const { data, error } = await supabase
           .from("exams")
-          .select("*")
+          .select(
+            `
+            *,
+            invigilation:invigilation(
+              *,
+              faculty:faculty_id(id, name)
+            )
+          `
+          )
           .order("date", { ascending: true });
 
         if (error) throw error;
@@ -28,6 +44,64 @@ const ExamPage = () => {
 
     getExams();
   }, []);
+
+  const handleInvigilate = async (exam) => {
+    try {
+      // Get user ID from localStorage
+      const userData = JSON.parse(localStorage.getItem("user"));
+
+      if (!userData || !userData.id) {
+        setInvigilationStatus({
+          message: "User information not found. Please log in again.",
+          type: "error",
+          examId: exam.id,
+        });
+        return;
+      }
+
+      const invigilation = {
+        exam_id: exam.id,
+        faculty_id: userData.id,
+        classroom_id: exam.classroom_id,
+      };
+
+      const { data, error } = await supabase
+        .from("invigilation")
+        .insert([invigilation]);
+
+      if (error) throw error;
+
+      // Refresh exams data to update UI with new invigilator
+      const { data: updatedExams, error: refreshError } = await supabase
+        .from("exams")
+        .select(
+          `
+          *,
+          invigilation:invigilation(
+            *,
+            faculty:faculty_id(id, name)
+          )
+        `
+        )
+        .order("date", { ascending: true });
+
+      if (refreshError) throw refreshError;
+      setExams(updatedExams || []);
+
+      setInvigilationStatus({
+        message: "You have been assigned as an invigilator for this exam.",
+        type: "success",
+        examId: exam.id,
+      });
+    } catch (err) {
+      console.error("Invigilation error:", err);
+      setInvigilationStatus({
+        message: "Failed to register as invigilator. Please try again.",
+        type: "error",
+        examId: exam.id,
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -131,13 +205,46 @@ const ExamPage = () => {
                   </p>
                 </div>
 
+                {/* Display invigilator information if available */}
+                {exam.invigilation &&
+                  exam.invigilation.length > 0 &&
+                  exam.invigilation[0].faculty && (
+                    <div className="mb-4 p-2 bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded">
+                      <p className="font-semibold">Invigilator:</p>
+                      <p>{exam.invigilation[0].faculty.name}</p>
+                    </div>
+                  )}
+
+                {invigilationStatus.examId === exam.id &&
+                  invigilationStatus.message && (
+                    <div
+                      className={`mb-4 p-2 text-sm rounded ${
+                        invigilationStatus.type === "success"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
+                    >
+                      {invigilationStatus.message}
+                    </div>
+                  )}
+
                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                  <button className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors mr-2">
+                  <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors mr-2">
                     Details
                   </button>
-                  <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors">
-                    Edit
-                  </button>
+                  {userRole === "admin" && (
+                    <button className="px-4 py-2 border border-gray-200 text-gray-400 rounded-md hover:bg-gray-100 transition-colors">
+                      Edit
+                    </button>
+                  )}
+                  {userRole === "faculty" && !exam.invigilation?.length && (
+                    <button
+                      className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors"
+                      onClick={() => handleInvigilate(exam)}
+                    >
+                      Invigilate
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

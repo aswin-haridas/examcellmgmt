@@ -9,6 +9,7 @@ const Classroom = ({
 }) => {
   const [seatingData, setSeatingData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasSeatingConfig, setHasSeatingConfig] = useState(false); // New state for tracking configuration status
   const role = localStorage.getItem("role");
   const totalBenches = 18; // As defined in generateSeatingArr.js
   const navigate = useNavigate(); // Initialize navigate function
@@ -26,6 +27,9 @@ const Classroom = ({
           console.error("Error fetching seating data:", error);
           return;
         }
+
+        // Set hasSeatingConfig based on whether data exists
+        setHasSeatingConfig(data && data.length > 0);
 
         if (data && data.length > 0) {
           // Extract the actual seating data from the response structure
@@ -177,9 +181,29 @@ const Classroom = ({
 
   return (
     <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-        {className} Seating Arrangement
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          {className} Seating Arrangement
+        </h2>
+        {/* Indicator for seating configuration status */}
+        {hasSeatingConfig && (
+          <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 flex items-center">
+            <svg
+              className="w-3 h-3 mr-1"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+            Configured
+          </span>
+        )}
+      </div>
 
       {loading ? (
         <div className="text-center py-12 flex flex-col items-center">

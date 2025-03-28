@@ -7,8 +7,8 @@ import TeacherDesk from "../components/TeacherDesk";
 
 const SeatingArrangement = ({
   allocatedSeats = null,
-  className = "Classroom",
-  classroomId = "0352d0dc-585a-4f55-940a-636b3dd98c42",
+  className,
+  classroomId,
 }) => {
   const navigate = useNavigate();
   const [seatingData, setSeatingData] = useState([]);
@@ -16,6 +16,8 @@ const SeatingArrangement = ({
   const [error, setError] = useState(null);
 
   const totalBenches = 18;
+  const columnsCount = 3; // 3 columns
+  const rowsCount = 6; // 6 rows
   const role = localStorage.getItem("role");
 
   // Fetch seating data only once on component mount
@@ -97,22 +99,56 @@ const SeatingArrangement = ({
     [uniqueBranches]
   );
 
-  // Memoize benches to prevent unnecessary re-renders
-  const benches = useMemo(() => {
-    return Array.from({ length: totalBenches }, (_, index) => {
-      const benchData = Array.isArray(seatingData)
-        ? seatingData.find((seat) => seat?.bench_row === index + 1)
-        : null;
-      return (
-        <Bench
-          key={index}
-          index={index}
-          benchData={benchData}
-          getBranchColor={getBranchColor}
-        />
-      );
-    });
-  }, [seatingData, getBranchColor, totalBenches]);
+  // Arrange benches row-wise (group by rows) instead of column-wise
+  const benchesGrid = useMemo(() => {
+    const rowGroups = Array(rowsCount)
+      .fill()
+      .map(() => Array(columnsCount).fill(null));
+
+    let benchIndex = 0;
+    for (let row = 0; row < rowsCount; row++) {
+      for (let col = 0; col < columnsCount; col++) {
+        if (benchIndex < totalBenches) {
+          rowGroups[row][col] = benchIndex;
+          benchIndex++;
+        }
+      }
+    }
+
+    return rowGroups;
+  }, [columnsCount, rowsCount, totalBenches]);
+
+  // Memoize rendered benches by row groups
+  const renderedBenches = useMemo(() => {
+    return (
+
+
+      <div className="flex flex-col gap-4">
+        {benchesGrid.map((row, rowIndex) => (
+          <div key={`row-${rowIndex}`} className="flex gap-8">
+            {row.map((benchIndex, colIndex) => {
+              if (benchIndex === null)
+                return <div key={`empty-${colIndex}`} className="flex-1"></div>;
+
+              const benchData = Array.isArray(seatingData)
+                ? seatingData.find((seat) => seat?.bench_row === benchIndex + 1)
+                : null;
+
+              return (
+                <div key={`bench-${benchIndex}`} className="flex-1">
+                  <Bench
+                    index={benchIndex}
+                    benchData={benchData}
+                    getBranchColor={getBranchColor}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }, [benchesGrid, seatingData, getBranchColor]);
 
   if (error) {
     return (
@@ -134,7 +170,7 @@ const SeatingArrangement = ({
   return (
     <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
-        {className} Seating Arrangement
+        {className} Seating Arrangement for
       </h2>
 
       {loading ? (
@@ -162,9 +198,7 @@ const SeatingArrangement = ({
                 Total benches: {totalBenches}
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {benches}
-            </div>
+            <div className="space-y-0">{renderedBenches}</div>
           </div>
         </>
       )}
