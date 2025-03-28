@@ -1,4 +1,4 @@
-import supabase from "../lib/supabase";
+import supabase from "./supabase";
 
 export const generateSeatingArr = async (
   examId1,

@@ -1,44 +1,17 @@
 import React, { useState, useEffect } from "react";
-import supabase from "../lib/supabase";
-import { generateSeatingArr } from "../services/generateSeatingArr";
+import { useNavigate } from "react-router-dom"; // Add this import for navigation
+import supabase from "../services/supabase";
 
- const Classroom = ({
+const Classroom = ({
   allocatedSeats = null,
   className = "Classroom",
-  classroomId = "0352d0dc-585a-4f55-940a-636b3dd98c42",
+  classroomId,
 }) => {
   const [seatingData, setSeatingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setModal] = useState(false);
-  const [branches, setBranches] = useState([]);
-  const [branch1, setBranch1] = useState("");
-  const [branch2, setBranch2] = useState("");
-  const [branch1Exams, setBranch1Exams] = useState([]);
-  const [branch2Exams, setBranch2Exams] = useState([]);
-  const [examId1, setExamId1] = useState("");
-  const [examId2, setExamId2] = useState("");
-  const [statusMessage, setStatusMessage] = useState({ type: "", message: "" });
-  const [processing, setProcessing] = useState(false);
-  const totalBenches = 18; // As defined in generateSeatingArr.js
   const role = localStorage.getItem("role");
-
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("branches")
-          .select("code, name");
-        if (error) throw error;
-        setBranches(data || []);
-      } catch (err) {
-        console.error("Error fetching branches:", err);
-      }
-    };
-
-    if (role === "admin") {
-      fetchBranches();
-    }
-  }, [role]);
+  const totalBenches = 18; // As defined in generateSeatingArr.js
+  const navigate = useNavigate(); // Initialize navigate function
 
   useEffect(() => {
     const fetchDefaultSeatingData = async () => {
@@ -81,36 +54,21 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
     }
   }, [allocatedSeats, classroomId]);
 
-  // Helper function to determine branch color
+  // Helper function to determine branch color - optimized version
   const getBranchColor = (student) => {
     if (!student) return "bg-gray-50";
 
-    // Get unique branches in this classroom
-    const uniqueBranches = new Set();
-    seatingData.forEach((seat) => {
-      if (seat.left_student) uniqueBranches.add(seat.left_student.branch);
-      if (seat.right_student) uniqueBranches.add(seat.right_student.branch);
-    });
+    // Get unique branches only once and memoize them
+    const branchColors = {
+      CSE: "bg-blue-100",
+      ECE: "bg-green-100",
+      EEE: "bg-yellow-100",
+      MECH: "bg-purple-100",
+      CIVIL: "bg-pink-100",
+      IT: "bg-orange-100",
+    };
 
-    const branchesArray = [...uniqueBranches];
-
-    // Assign colors based on branch index
-    switch (student.branch) {
-      case branchesArray[0]:
-        return "bg-blue-100";
-      case branchesArray[1]:
-        return "bg-green-100";
-      case branchesArray[2]:
-        return "bg-yellow-100";
-      case branchesArray[3]:
-        return "bg-purple-100";
-      case branchesArray[4]:
-        return "bg-pink-100";
-      case branchesArray[5]:
-        return "bg-orange-100";
-      default:
-        return "bg-gray-100";
-    }
+    return branchColors[student.branch] || "bg-gray-100";
   };
 
   // Create array of student benches
@@ -123,8 +81,8 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
       const rightStudent = benchData?.right_student || null;
 
       // Calculate different colors based on branch
-      const leftBgColor = getBranchColor(leftStudent, benchData);
-      const rightBgColor = getBranchColor(rightStudent, benchData);
+      const leftBgColor = getBranchColor(leftStudent);
+      const rightBgColor = getBranchColor(rightStudent);
 
       return (
         <div
@@ -179,46 +137,8 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
     });
   };
 
-  const arrange = async () => {
-    setModal(true);
-  };
-
-  const handleArrangementSubmit = async (e) => {
-    e.preventDefault();
-    if (!branch1 || !branch2 || !examId1 || !examId2) {
-      setStatusMessage({ type: "error", message: "Please fill all fields" });
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      setStatusMessage({ type: "", message: "" });
-
-      const result = await generateSeatingArr(
-        examId1,
-        examId2,
-        classroomId,
-        branch1,
-        branch2
-      );
-
-      if (result.success) {
-        setSeatingData(result.data);
-        setStatusMessage({
-          type: "success",
-          message: `Successfully arranged seats for ${branch1} and ${branch2}`,
-        });
-        setTimeout(() => setModal(false), 2000);
-      }
-    } catch (error) {
-      console.error("Error generating seating arrangement:", error);
-      setStatusMessage({
-        type: "error",
-        message: `Failed to generate seating: ${error.message}`,
-      });
-    } finally {
-      setProcessing(false);
-    }
+  const arrange = () => {
+    navigate(`/classrooms/arrange-seats/${classroomId}`);
   };
 
   // Generate branch legend
@@ -256,13 +176,13 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
   };
 
   return (
-    <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-      <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
+    <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 shadow-md">
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         {className} Seating Arrangement
       </h2>
 
       {loading ? (
-        <div className="text-center py-8">
+        <div className="text-center py-12 flex flex-col items-center">
           <p>Loading seating arrangement...</p>
         </div>
       ) : (
@@ -272,164 +192,14 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
           {seatingData.length === 0 && (
             <div className="mt-6 text-center text-sm bg-amber-50 text-amber-700 p-4 rounded-md border border-amber-200">
               No students available to allocate seats for this exam
-            </div>
-          )}
-
-          {role === "admin" && (
-            <button
-              onClick={arrange}
-              className="bg-black rounded-md text-white p-2 mb-4 hover:bg-gray-800 transition-colors"
-            >
-              Arrange Seats
-            </button>
-          )}
-
-          {/* Seating Arrangement Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
-              <div className="bg-white p-5 rounded-lg shadow-xl w-full max-w-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold">
-                    Generate Seating Arrangement
-                  </h3>
-                  <button
-                    onClick={() => setModal(false)}
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    &times;
-                  </button>
-                </div>
-
-                {statusMessage.type && (
-                  <div
-                    className={`p-3 mb-4 rounded-md ${
-                      statusMessage.type === "success"
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                  >
-                    {statusMessage.message}
-                  </div>
-                )}
-
-                <form onSubmit={handleArrangementSubmit}>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">
-                      Branch 1
-                    </label>
-                    <select
-                      value={branch1}
-                      onChange={async (e) => {
-                        setBranch1(e.target.value);
-                        const { data, error } = await supabase
-                          .from("exams")
-                          .select("id, name")
-                          .eq("branch_code", e.target.value);
-                        if (error) {
-                          console.error("Error fetching exams:", error);
-                          return;
-                        }
-                        setBranch1Exams(data || []);
-                      }}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="">Select Branch</option>
-                      {branches.map((branch) => (
-                        <option key={`b1-${branch.code}`} value={branch.code}>
-                          {branch.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">
-                      Exam ID 1
-                    </label>
-                    <select
-                      value={examId1}
-                      onChange={(e) => setExamId1(e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="">Select Exam</option>
-                      {branch1Exams.map((exam) => (
-                        <option key={`e1-${exam.id}`} value={exam.id}>
-                          {exam.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">
-                      Branch 2
-                    </label>
-                    <select
-                      value={branch2}
-                      onChange={async (e) => {
-                        setBranch2(e.target.value);
-                        const { data, error } = await supabase
-                          .from("exams")
-                          .select("id, name")
-                          .eq("branch_code", e.target.value);
-                        if (error) {
-                          console.error("Error fetching exams:", error);
-                          return;
-                        }
-                        setBranch2Exams(data || []);
-                      }}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="">Select Branch</option>
-                      {branches.map((branch) => (
-                        <option key={`b2-${branch.code}`} value={branch.code}>
-                          {branch.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1">
-                      Exam ID 2
-                    </label>
-                    <select
-                      value={examId2}
-                      onChange={(e) => setExamId2(e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    >
-                      <option value="">Select Exam</option>
-                      {branch2Exams.map((exam) => (
-                        <option key={`e2-${exam.id}`} value={exam.id}>
-                          {exam.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setModal(false)}
-                      className="mr-2 px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-                      disabled={processing}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:bg-gray-400"
-                      disabled={processing}
-                    >
-                      {processing ? "Processing..." : "Generate"}
-                    </button>
-                  </div>
-                </form>
-              </div>
+              {role === "admin" && (
+                <button
+                  onClick={arrange}
+                  className="bg-black ml-8 rounded-md text-white p-2 mb-4 hover:bg-gray-800 transition-colors"
+                >
+                  Arrange Seats
+                </button>
+              )}
             </div>
           )}
 
@@ -461,5 +231,4 @@ import { generateSeatingArr } from "../services/generateSeatingArr";
   );
 };
 
-
-export default Classroom
+export default Classroom;

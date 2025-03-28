@@ -15,15 +15,82 @@ import {
 } from "lucide-react";
 import { logout } from "../services/auth";
 
+// Define all sidebar items with their roles
+const sidebarItems = [
+  {
+    to: (role) => getDashboardPath(role),
+    icon: <Home size={20} />,
+    text: "Dashboard",
+    roles: ["admin", "faculty", "student"],
+    isActive: (path, role) => path === getDashboardPath(role),
+  },
+  {
+    to: "/users",
+    icon: <Users size={20} />,
+    text: "User Management",
+    roles: ["admin"],
+    isActive: (path) => path.startsWith("/users"),
+  },
+  {
+    to: "/exams",
+    icon: <FileText size={20} />,
+    text: "Exam Management",
+    roles: ["admin"],
+    isActive: (path) => path.startsWith("/exams"),
+  },
+  {
+    to: "/classrooms",
+    icon: <Building size={20} />,
+    text: "Classrooms",
+    roles: ["admin", "faculty", "student"],
+    isActive: (path) => path.startsWith("/classrooms"),
+  },
+  {
+    to: "/invigilation",
+    icon: <CalendarIcon size={20} />,
+    text: "Invigilation Duties",
+    roles: ["admin", "faculty"],
+    isActive: (path) => path.startsWith("/invigilation"),
+  },
+  {
+    to: "/exam-schedule",
+    icon: <CalendarIcon size={20} />,
+    text: "Exam Schedule",
+    roles: ["faculty", "student"],
+    isActive: (path) => path.startsWith("/exam-schedule"),
+  },
+  {
+    to: "/notifications",
+    icon: <Bell size={20} />,
+    text: "Notifications",
+    roles: ["faculty", "student"],
+    isActive: (path) => path === "/notifications",
+  },
+  {
+    to: "/profile",
+    icon: <User size={20} />,
+    text: "Profile",
+    roles: ["admin", "faculty", "student"],
+    isActive: (path) => path === "/profile",
+  },
+  {
+    to: "/settings",
+    icon: <Settings size={20} />,
+    text: "Settings",
+    roles: ["admin", "faculty", "student"],
+    isActive: (path) => path === "/settings",
+  },
+];
+
+// Get the proper dashboard path for the role
+const getDashboardPath = (role) => {
+  if (role === "admin") return "/admin-dashboard";
+  return `/${role}-dashboard`;
+};
+
 const Sidebar = ({ role }) => {
   const location = useLocation();
   const path = location.pathname;
-
-  // Get the proper dashboard path for the role
-  const getDashboardPath = (role) => {
-    if (role === "admin") return "/admin-dashboard";
-    return `/${role}-dashboard`;
-  };
 
   const onclickLogout = () => {
     logout();
@@ -42,96 +109,26 @@ const Sidebar = ({ role }) => {
         </p>
       </div>
       <nav className="mt-2 flex flex-col h-[calc(100vh-150px)]">
-        {/* Common link for all roles */}
-        <Link to={getDashboardPath(role)}>
-          <SidebarItem
-            icon={<Home size={20} />}
-            text="Dashboard"
-            active={path === getDashboardPath(role)}
-          />
-        </Link>
+        {/* Map through sidebar items and filter by role */}
+        {sidebarItems
+          .filter((item) => item.roles.includes(role))
+          .map((item, index) => (
+            <Link
+              key={index}
+              to={typeof item.to === "function" ? item.to(role) : item.to}
+            >
+              <SidebarItem
+                icon={item.icon}
+                text={item.text}
+                active={item.isActive(path, role)}
+              />
+            </Link>
+          ))}
 
-        {/* Conditional rendering based on user role */}
-        {role === "admin" ? (
-          // Admin-specific sidebar items
-          <>
-            <Link to={`/users`}>
-              <SidebarItem
-                icon={<Users size={20} />}
-                text="User Management"
-                active={path.startsWith(`/users`)}
-              />
-            </Link>
-            <Link to={`/exams`}>
-              <SidebarItem
-                icon={<FileText size={20} />}
-                text="Exam Management"
-                active={path.startsWith(`/exams`)}
-              />
-            </Link>
-            <Link to={`/classrooms`}>
-              <SidebarItem
-                icon={<Building size={20} />}
-                text="Classrooms"
-                active={path.startsWith(`/classrooms`)}
-              />
-            </Link>
-            <Link to={`/seating`}>
-              <SidebarItem
-                icon={<ClipboardList size={20} />}
-                text="Seating Plans"
-                active={path.startsWith(`/seating`)}
-              />
-            </Link>
-            <Link to={`/invigilation`}>
-              <SidebarItem
-                icon={<CalendarIcon size={20} />}
-                text="Invigilation Duties"
-                active={path.startsWith(`/invigilation`)}
-              />
-            </Link>
-          </>
-        ) : (
-          // Student and faculty common items
-          <>
-            <Link to={`/exam-schedule`}>
-              <SidebarItem
-                icon={<CalendarIcon size={20} />}
-                text="Exam Schedule"
-                active={path.startsWith(`/exam-schedule`)}
-              />
-            </Link>
-            <Link to={`/notifications`}>
-              <SidebarItem
-                icon={<Bell size={20} />}
-                text="Notifications"
-                active={path === `/notifications`}
-              />
-            </Link>
-          </>
-        )}
-
-        {/* Common items for all roles */}
-        <Link to={`/profile`}>
-          <SidebarItem
-            icon={<User size={20} />}
-            text="Profile"
-            active={path === `/profile`}
-          />
-        </Link>
-        <Link to={`/settings`}>
-          <SidebarItem
-            icon={<Settings size={20} />}
-            text="Settings"
-            active={path === `/settings`}
-          />
-        </Link>
         <div className="mt-auto mb-6">
-          <div onClick={onclickLogout}>
-            {" "}
-            {/* This is correct usage now */}
+          <Link to="/" onClick={onclickLogout}>
             <SidebarItem icon={<LogOut size={20} />} text="Logout" />
-          </div>
+          </Link>
         </div>
         <div>
           <SidebarItem
@@ -148,15 +145,11 @@ const Sidebar = ({ role }) => {
 const SidebarItem = ({ icon, text, active, className }) => {
   return (
     <div
-      className={`
-        flex items-center px-6 py-3 cursor-pointer transition-all duration-200
-        ${
-          active
-            ? "bg-gray-100 text-gray-900 font-medium border-r-4 border-gray-900"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        }
-        ${className || ""}
-      `}
+      className={`flex items-center px-6 py-3 cursor-pointer transition-all duration-200 ${
+        active
+          ? "bg-gray-100 text-gray-900 font-medium border-r-4 border-gray-900"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      } ${className || ""}`}
     >
       <div className={`mr-3 ${active ? "text-gray-900" : "text-gray-500"}`}>
         {icon}

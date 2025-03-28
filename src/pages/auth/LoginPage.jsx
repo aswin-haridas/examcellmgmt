@@ -25,6 +25,8 @@ const LoginPage = () => {
 
     try {
       const user = await login(formData.email, formData.password);
+
+      // Set loggedIn flag to true
       localStorage.setItem("loggedIn", "true");
 
       // Map user role directly to route path
@@ -36,7 +38,7 @@ const LoginPage = () => {
 
       navigate(paths[user.role] || "/student-dashboard");
     } catch (error) {
-      setError(error.message || "Login failed");
+      setError("Invalid email or password");
       setOpenSnackbar(true);
     } finally {
       setIsLoading(false);

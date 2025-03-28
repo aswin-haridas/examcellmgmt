@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import supabase from "../lib/supabase";
+import supabase from "../services/supabase";
 
 const Dashboard = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [branchFilter, setBranchFilter] = useState("All");
+  const [fromDateFilter, setFromDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+  const [branches, setBranches] = useState(["All"]);
+  const [filteredExams, setFilteredExams] = useState([]);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -12,6 +17,9 @@ const Dashboard = () => {
         const { data, error } = await supabase.from("exams").select("*");
         if (error) throw error;
         setExams(data || []);
+
+        const uniqueBranches = [...new Set(data.map((exam) => exam.branch))];
+        setBranches(["All", ...uniqueBranches]);
       } catch (error) {
         console.error("Error fetching exams:", error);
       } finally {
@@ -20,6 +28,28 @@ const Dashboard = () => {
     };
     fetchExams();
   }, []);
+
+  useEffect(() => {
+    let filtered = [...exams];
+
+    if (branchFilter !== "All") {
+      filtered = filtered.filter((exam) => exam.branch === branchFilter);
+    }
+
+    if (fromDateFilter) {
+      const fromDate = new Date(fromDateFilter);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((exam) => new Date(exam.date) >= fromDate);
+    }
+
+    if (toDateFilter) {
+      const toDate = new Date(toDateFilter);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((exam) => new Date(exam.date) <= toDate);
+    }
+
+    setFilteredExams(filtered);
+  }, [exams, branchFilter, fromDateFilter, toDateFilter]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -30,12 +60,87 @@ const Dashboard = () => {
           <div className="text-gray-600">Loading exams...</div>
         ) : (
           <>
+            <div className="mb-6 bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col">
+                <label
+                  htmlFor="branchFilter"
+                  className="text-sm text-gray-600 mb-1"
+                >
+                  Filter by Branch:
+                </label>
+                <select
+                  id="branchFilter"
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {branches.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label
+                  htmlFor="fromDateFilter"
+                  className="text-sm text-gray-600 mb-1"
+                >
+                  From Date:
+                </label>
+                <input
+                  type="date"
+                  id="fromDateFilter"
+                  value={fromDateFilter}
+                  onChange={(e) => setFromDateFilter(e.target.value)}
+                  className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label
+                  htmlFor="toDateFilter"
+                  className="text-sm text-gray-600 mb-1"
+                >
+                  To Date:
+                </label>
+                <input
+                  type="date"
+                  id="toDateFilter"
+                  value={toDateFilter}
+                  onChange={(e) => setToDateFilter(e.target.value)}
+                  className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {(branchFilter !== "All" || fromDateFilter || toDateFilter) && (
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setBranchFilter("All");
+                      setFromDateFilter("");
+                      setToDateFilter("");
+                    }}
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </div>
+
             <p className="mb-6 text-gray-600">
-              Showing {exams.length} scheduled exams
+              Showing {filteredExams.length} of {exams.length} scheduled exams
+              {branchFilter !== "All" && ` for ${branchFilter} branch`}
+              {fromDateFilter &&
+                ` from ${new Date(fromDateFilter).toLocaleDateString()}`}
+              {toDateFilter &&
+                ` to ${new Date(toDateFilter).toLocaleDateString()}`}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {exams.map((exam) => (
+              {filteredExams.map((exam) => (
                 <div
                   key={exam.id}
                   className="bg-white shadow-md rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow"
@@ -85,9 +190,11 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {exams.length === 0 && (
+            {filteredExams.length === 0 && (
               <div className="text-center py-10 text-gray-500">
-                No exams scheduled
+                {exams.length === 0
+                  ? "No exams scheduled"
+                  : "No exams match your filters"}
               </div>
             )}
           </>
