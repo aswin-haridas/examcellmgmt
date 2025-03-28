@@ -1,96 +1,90 @@
 import supabase from "../lib/supabase";
-import { adminService } from "./api";
 
-// Constants
-const MAX_BENCHES_PER_CLASSROOM = 15;
-
-const getEligibleStudentsForExam = async (branch) => {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("role", "student")
-    .eq("branch", branch);
-
-  if (error) throw new Error(error.message);
-  return data || [];
-};
-
-// Add a new function to generate seating arrangements
-const generateSeatingArrangement = async (
-  examId,
+export const generateSeatingArr = async (
+  examId1,
+  examId2,
   classroomId,
-  { branch1, branch2 }
+  branch1,
+  branch2
 ) => {
   try {
-    // Get students from both branches
-    const branch1Students = await getEligibleStudentsForExam(branch1);
-    const branch2Students = await getEligibleStudentsForExam(branch2);
+    // Fetch students for exam 1
+    const { data: exam1Students, error: error1 } = await supabase
+      .from("exam_registrations")
+      .select("student_id, students(university_no, branch_name, branch_code)")
+      .eq("exam_id", examId1);
 
-    console.log(
-      `Found ${branch1Students.length} students from branch1 and ${branch2Students.length} students from branch2`
-    );
+    if (error1)
+      throw new Error(`Failed to fetch exam 1 students: ${error1.message}`);
 
-    // Get the classroom details
-    const { data: classroom, error: classroomError } = await supabase
-      .from("classrooms")
-      .select("*")
-      .eq("id", classroomId)
-      .single();
+    // Fetch students for exam 2
+    const { data: exam2Students, error: error2 } = await supabase
+      .from("exam_registrations")
+      .select("student_id, students(university_no, branch_name, branch_code)")
+      .eq("exam_id", examId2);
 
-    if (classroomError) throw new Error(classroomError.message);
-    if (!classroom) throw new Error("Classroom not found");
+    if (error2)
+      throw new Error(`Failed to fetch exam 2 students: ${error2.message}`);
 
-    // Determine how many benches to use (minimum of classroom capacity or MAX_BENCHES_PER_CLASSROOM)
-    const numberOfBenches = Math.min(
-      MAX_BENCHES_PER_CLASSROOM,
-      Math.floor(classroom.capacity / 2)
-    );
+    // Process students from both exams
+    const students1 = exam1Students.map((reg) => ({
+      university_no: reg.students.university_no,
+      branch_name: reg.students.branch_name,
+      branch: reg.students.branch_code,
+    }));
 
-    // Create seating assignments
-    const seatingArrangements = [];
+    const students2 = exam2Students.map((reg) => ({
+      university_no: reg.students.university_no,
+      branch_name: reg.students.branch_name,
+      branch: reg.students.branch_code,
+    }));
 
-    // Create arrangements for each bench row
-    for (let benchRow = 1; benchRow <= numberOfBenches; benchRow++) {
-      // Get students for this bench
-      const leftStudentIndex = benchRow - 1;
-      const rightStudentIndex = benchRow - 1;
+    // Create seating arrangement with alternating students
+    const totalBenches = 15; // Match the value in Class.jsx
+    const seatingArr = [];
 
-      // Check if we have enough students for this bench
-      const leftStudent = branch1Students[leftStudentIndex];
-      const rightStudent = branch2Students[rightStudentIndex];
+    for (let i = 0; i < totalBenches; i++) {
+      // For each bench, allocate a student from each branch
+      const leftStudent = students1[i] || null;
+      const rightStudent = students2[i] || null;
 
-      // Only create a bench if we have at least one student for it
-      if (leftStudent || rightStudent) {
-        seatingArrangements.push({
-          exam_id: examId,
+      seatingArr.push({
+        bench_row: i + 1,
+        left_student: leftStudent,
+        right_student: rightStudent,
+      });
+    }
+
+    // Store the seating arrangement in Supabase
+    const { data, error } = await supabase
+      .from("classroom_seating")
+      .upsert(
+        {
           classroom_id: classroomId,
-          bench_row: benchRow,
-          left: leftStudent?.id || null,
-          right: rightStudent?.id || null,
-        });
-      }
-    }
+          seating_data: seatingArr,
+          exam1_id: examId1,
+          exam2_id: examId2,
+          branch1_code: branch1,
+          branch2_code: branch2,
+        },
+        { onConflict: "classroom_id" }
+      )
+      .select();
 
-    // Insert the arrangements into the database
-    if (seatingArrangements.length > 0) {
-      const { data, error } = await supabase
-        .from("seating_arrangement")
-        .insert(seatingArrangements);
-
-      if (error) throw new Error(error.message);
-    }
-
-    // Update the exam with the classroom_id
-    await adminService.updateExam(examId, { classroom_id: classroomId });
+    if (error)
+      throw new Error(`Failed to store seating arrangement: ${error.message}`);
 
     return {
       success: true,
-      message: `Created ${seatingArrangements.length} bench arrangements`,
+      data: seatingArr,
+      message: `Successfully created seating arrangement for ${branch1} and ${branch2}`,
     };
   } catch (error) {
-    console.error("Error in generateSeatingArrangement:", error);
-    throw error;
+    console.error("Seating arrangement generation error:", error);
+    return {
+      success: false,
+      data: null,
+      message: error.message,
+    };
   }
 };
-
-export default generateSeatingArrangement;

@@ -13,22 +13,24 @@ import {
   ClipboardList,
   Building,
 } from "lucide-react";
+import { logout } from "../services/auth";
 
-const Sidebar = () => {
+const Sidebar = ({ role }) => {
   const location = useLocation();
   const path = location.pathname;
 
-  // Determine the user role based on the current path
-  const role = path.startsWith("/student")
-    ? "student"
-    : path.startsWith("/faculty")
-    ? "faculty"
-    : path.startsWith("/admin")
-    ? "admin"
-    : "";
+  // Get the proper dashboard path for the role
+  const getDashboardPath = (role) => {
+    if (role === "admin") return "/admin-dashboard";
+    return `/${role}-dashboard`;
+  };
+
+  const onclickLogout = () => {
+    logout();
+  };
 
   return (
-    <div className=" h-screen w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto ">
+    <div className="fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 shadow-sm">
       <div className="p-6">
         <h2 className="text-2xl font-bold text-black">ExamCell</h2>
         <p className="text-gray-600 text-sm mt-1">
@@ -41,11 +43,11 @@ const Sidebar = () => {
       </div>
       <nav className="mt-2 flex flex-col h-[calc(100vh-150px)]">
         {/* Common link for all roles */}
-        <Link to={`/${role}`}>
+        <Link to={getDashboardPath(role)}>
           <SidebarItem
             icon={<Home size={20} />}
             text="Dashboard"
-            active={path === `/${role}`}
+            active={path === getDashboardPath(role)}
           />
         </Link>
 
@@ -53,81 +55,89 @@ const Sidebar = () => {
         {role === "admin" ? (
           // Admin-specific sidebar items
           <>
-            <Link to={`/${role}/users`}>
+            <Link to={`/users`}>
               <SidebarItem
                 icon={<Users size={20} />}
                 text="User Management"
-                active={path.startsWith(`/${role}/users`)}
+                active={path.startsWith(`/users`)}
               />
             </Link>
-            <Link to={`/${role}/exams`}>
+            <Link to={`/exams`}>
               <SidebarItem
                 icon={<FileText size={20} />}
                 text="Exam Management"
-                active={path.startsWith(`/${role}/exams`)}
+                active={path.startsWith(`/exams`)}
               />
             </Link>
-            <Link to={`/${role}/classrooms`}>
+            <Link to={`/classrooms`}>
               <SidebarItem
                 icon={<Building size={20} />}
                 text="Classrooms"
-                active={path.startsWith(`/${role}/classrooms`)}
+                active={path.startsWith(`/classrooms`)}
               />
             </Link>
-            <Link to={`/${role}/seating`}>
+            <Link to={`/seating`}>
               <SidebarItem
                 icon={<ClipboardList size={20} />}
                 text="Seating Plans"
-                active={path.startsWith(`/${role}/seating`)}
+                active={path.startsWith(`/seating`)}
               />
             </Link>
-            <Link to={`/${role}/invigilation`}>
+            <Link to={`/invigilation`}>
               <SidebarItem
                 icon={<CalendarIcon size={20} />}
                 text="Invigilation Duties"
-                active={path.startsWith(`/${role}/invigilation`)}
+                active={path.startsWith(`/invigilation`)}
               />
             </Link>
           </>
         ) : (
           // Student and faculty common items
           <>
-            <Link to={`/${role}/exam-schedule`}>
+            <Link to={`/exam-schedule`}>
               <SidebarItem
                 icon={<CalendarIcon size={20} />}
                 text="Exam Schedule"
-                active={path.startsWith(`/${role}/exam-schedule`)}
+                active={path.startsWith(`/exam-schedule`)}
               />
             </Link>
-            <Link to={`/${role}/notifications`}>
+            <Link to={`/notifications`}>
               <SidebarItem
                 icon={<Bell size={20} />}
                 text="Notifications"
-                active={path === `/${role}/notifications`}
+                active={path === `/notifications`}
               />
             </Link>
           </>
         )}
 
         {/* Common items for all roles */}
-        <Link to={`/${role}/profile`}>
+        <Link to={`/profile`}>
           <SidebarItem
             icon={<User size={20} />}
             text="Profile"
-            active={path === `/${role}/profile`}
+            active={path === `/profile`}
           />
         </Link>
-        <Link to={`/${role}/settings`}>
+        <Link to={`/settings`}>
           <SidebarItem
             icon={<Settings size={20} />}
             text="Settings"
-            active={path === `/${role}/settings`}
+            active={path === `/settings`}
           />
         </Link>
         <div className="mt-auto mb-6">
-          <Link to={`/${role}/logout`}>
+          <div onClick={onclickLogout}>
+            {" "}
+            {/* This is correct usage now */}
             <SidebarItem icon={<LogOut size={20} />} text="Logout" />
-          </Link>
+          </div>
+        </div>
+        <div>
+          <SidebarItem
+            icon={<FileText size={20} />}
+            text={JSON.parse(localStorage.getItem("user"))?.name}
+          />
         </div>
       </nav>
     </div>

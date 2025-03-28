@@ -15,7 +15,6 @@ export const login = async (email, password) => {
 };
 
 export const logout = async () => {
-  localStorage.removeItem("role");
-  localStorage.removeItem("user");
+  localStorage.clear();
   return true;
 };

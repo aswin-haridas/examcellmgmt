@@ -5,9 +5,8 @@ import { Snackbar, Alert } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { login } from "../../services/auth";
 
-export const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const LoginPage = () => {
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isFacultyLogin, setIsFacultyLogin] = useState(false);
   const [error, setError] = useState("");
@@ -15,56 +14,61 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const user = await login(email, password);
-      console.log("User logged in successfully", user);
-      const path =
-        user.role === "admin"
-          ? "/admin-dashboard"
-          : user.role === "faculty"
-          ? "/faculty-dashboard"
-          : "/student-dashboard";
+      const user = await login(formData.email, formData.password);
       localStorage.setItem("loggedIn", "true");
-      navigate(path);
+
+      // Map user role directly to route path
+      const paths = {
+        admin: "/admin-dashboard",
+        faculty: "/faculty-dashboard",
+        student: "/student-dashboard",
+      };
+
+      navigate(paths[user.role] || "/student-dashboard");
     } catch (error) {
-      showError(error.message || "Invalid email or password.");
+      setError(error.message || "Login failed");
+      setOpenSnackbar(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const showError = (message) => {
-    setError(message);
-    setOpenSnackbar(true);
-  };
-
   const handleSwitch = () => {
     setIsFacultyLogin(!isFacultyLogin);
-    setEmail("");
-    setPassword("");
+    setFormData({ email: "", password: "" });
   };
 
+  // Simplified animation variants
   const formVariants = {
-    initial: (direction) => ({
-      x: direction === "faculty" ? "100%" : "-100%",
+    initial: {
+      x: isFacultyLogin ? "100%" : "-100%",
       opacity: 0,
-    }),
-    animate: { x: 0, opacity: 1 },
-    exit: (direction) => ({
-      x: direction === "faculty" ? "-100%" : "100%",
+    },
+    animate: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: {
+      x: isFacultyLogin ? "-100%" : "100%",
       opacity: 0,
-    }),
+    },
   };
 
   return (
     <div className="flex">
       <div className="flex-1 min-h-screen flex items-center justify-center bg-gray-100 py-10">
         <div className="relative w-full max-w-3xl min-h-[480px] bg-white rounded-lg shadow-2xl overflow-hidden my-10">
-          <div className="flex h-full ">
+          <div className="flex h-full">
             {/* Form Container */}
             <motion.div
               className="w-1/2 h-full flex items-center justify-center"
@@ -75,17 +79,13 @@ export const LoginPage = () => {
               }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-              <AnimatePresence
-                mode="wait"
-                custom={isFacultyLogin ? "faculty" : "student"}
-              >
+              <AnimatePresence mode="wait">
                 <motion.div
                   key={isFacultyLogin ? "faculty" : "student"}
                   variants={formVariants}
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  custom={isFacultyLogin ? "faculty" : "student"}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className="w-full flex items-center justify-center flex-col p-12"
                 >
@@ -104,8 +104,8 @@ export const LoginPage = () => {
                         id="email"
                         type="email"
                         placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleChange}
                         className="w-full bg-gray-200 border-none p-3 rounded-lg"
                         required
                       />
@@ -121,8 +121,8 @@ export const LoginPage = () => {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={handleChange}
                         className="w-full bg-gray-200 border-none p-3 rounded-lg pr-10"
                         required
                       />
@@ -194,7 +194,6 @@ export const LoginPage = () => {
           </div>
         </div>
 
-        {/* Snackbar */}
         <Snackbar
           open={openSnackbar}
           autoHideDuration={3000}
@@ -213,3 +212,5 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;
