@@ -1,119 +1,255 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import supabase from "../services/supabase";
 import { generateSeatingArr } from "../services/generateSeatingArr";
 import SeatingArrangement from "./seatingArrangement";
 
 const SeatingGenForm = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams(); // Correctly extract the ID parameter from URL
-  const [classrooms, setClassrooms] = useState([]);
-  const [branches, setBranches] = useState([]);
-  const [branch1, setBranch1] = useState("");
-  const [branch2, setBranch2] = useState("");
-  const [branch1Exams, setBranch1Exams] = useState([]);
-  const [branch2Exams, setBranch2Exams] = useState([]);
-  const [examId1, setExamId1] = useState("");
-  const [examId2, setExamId2] = useState("");
-  const [classroomId, setClassroomId] = useState(id); // Use the extracted ID
-  const [classroomName, setClassroomName] = useState("");
-  const [processing, setProcessing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState({ type: "", message: "" });
-  const [seatingData, setSeatingData] = useState([]);
-  const [generatedArrangement, setGeneratedArrangement] = useState(false);
+  const { id } = useParams();
 
+  // Define fixed branches
+  const BRANCHES = [
+    { code: "CSE", name: "Computer Science Engineering" },
+    { code: "ECE", name: "Electronics & Communication Engineering" },
+  ];
+
+  const [form, setForm] = useState({
+    classrooms: [],
+    branch1: "",
+    branch2: "",
+    branch1Exams: [],
+    branch2Exams: [],
+    examId1: "",
+    examId2: "",
+    classroomId: id || "",
+    classroomName: "",
+  });
+  const [processing, setProcessing] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [seatingData, setSeatingData] = useState([]);
+  const [showArrangement, setShowArrangement] = useState(false);
+
+  const updateForm = useCallback((updates) => {
+    setForm((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  // Fetch classrooms on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch classrooms
+        // Only fetch classrooms since branches are predefined
         const { data: classroomsData, error: classroomsError } = await supabase
           .from("classrooms")
-          .select("id, classname");
+          .select("*");
 
-        if (classroomsError) throw classroomsError;
-        setClassrooms(classroomsData || []);
+        if (classroomsError)
+          throw new Error(
+            `Classrooms fetch failed: ${classroomsError.message}`
+          );
 
-        // Check if classroom ID is provided in URL params
+        const updates = {
+          classrooms: classroomsData || [],
+        };
 
-        console.log("Classroom data:", id); // Log the extracted ID instead
-
-        // Fetch classroom name using classroomId
+        // If a classroom ID is provided, fetch its details
         if (id) {
-          // Use the extracted ID
-          const { data: classroomData, error: classroomError } = await supabase
+          const { data: classroom, error } = await supabase
             .from("classrooms")
-            .select("classname")
-            .eq("id", id) // Use the extracted ID
+            .select("*")
+            .eq("id", id)
             .single();
 
-          if (classroomError) throw classroomError;
-          setClassroomName(classroomData?.classname || "");
+          if (error)
+            throw new Error(`Classroom fetch failed: ${error.message}`);
+
+          updates.classroomName = classroom?.classname || "";
         }
 
-        // Fetch branches
-        const { data: branchesData, error: branchesError } = await supabase
-          .from("branches")
-          .select("code");
-
-        if (branchesError) throw branchesError;
-        setBranches(branchesData || []);
+        updateForm(updates);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        setStatusMessage({
-          type: "error",
-          message: `Failed to load data: ${error.message}`,
-        });
+        console.error("Error fetching initial data:", error);
+        setStatus({ type: "error", message: error.message });
       }
     };
 
     fetchData();
-  }, [location.search]);
+  }, [id, updateForm]);
 
-  const handleArrangementSubmit = async (e) => {
+  // Fetch exams for a branch (CSE or ECE)
+  const fetchExams = useCallback(
+    async (branch, branchNum) => {
+      if (!branch) {
+        updateForm(
+          branchNum === 1
+            ? { branch1Exams: [], examId1: "" }
+            : { branch2Exams: [], examId2: "" }
+        );
+        return;
+      }
+
+      try {
+        // Fetch exams for the selected branch
+        const { data: examsData, error: examsError } = await supabase
+          .from("exams")
+          .select("*")
+          .eq("branch", branch);
+
+        if (examsError)
+          throw new Error(`Exams fetch failed: ${examsError.message}`);
+
+        // Create proper format with clear separation of id and display name
+        const formattedExams = examsData.map((exam) => ({
+          id: exam.id, // The actual UUID
+          title: exam.subject,
+          code: exam.id, // Keep this for backward compatibility
+          name: `${branch} - ${exam.subject} (${new Date(
+            exam.date
+          ).toLocaleDateString()}, ${exam.start_time?.slice(0, 5)})`,
+        }));
+
+        updateForm(
+          branchNum === 1
+            ? { branch1Exams: formattedExams }
+            : { branch2Exams: formattedExams }
+        );
+      } catch (error) {
+        console.error(`Error fetching exams for branch ${branch}:`, error);
+        setStatus({ type: "error", message: error.message });
+        updateForm(
+          branchNum === 1 ? { branch1Exams: [] } : { branch2Exams: [] }
+        );
+      }
+    },
+    [updateForm]
+  );
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const { branch1, branch2, examId1, examId2, classroomId } = form;
+
+    // Form validation
     if (!branch1 || !branch2 || !examId1 || !examId2 || !classroomId) {
-      setStatusMessage({ type: "error", message: "Please fill all fields" });
+      setStatus({ type: "error", message: "All fields are required" });
       return;
     }
 
-    try {
-      setProcessing(true);
-      setStatusMessage({ type: "", message: "" });
+    // Prevent duplicate selections
+    if (branch1 === branch2 && examId1 === examId2) {
+      setStatus({
+        type: "error",
+        message: "Cannot use the same exam for both branches",
+      });
+      return;
+    }
 
-      // Pass additional parameter to indicate same row arrangement
-      const result = await generateSeatingArr(
+    setProcessing(true);
+    setStatus({ type: "", message: "" });
+
+    try {
+      // Generate the seating arrangement
+      const result = await generateSeatingArrangement(
         examId1,
         examId2,
         classroomId,
         branch1,
-        branch2,
-        true // sameRowForBranch1 parameter
+        branch2
       );
 
-      if (result.success) {
-        setSeatingData(result.data);
-        setGeneratedArrangement(true);
-        setStatusMessage({
-          type: "success",
-          message: `Successfully arranged seats for ${branch1} and ${branch2}`,
-        });
-      } else {
-        setStatusMessage({
-          type: "error",
-          message: result.message,
-        });
-      }
+      setSeatingData(result.data || []);
+      setShowArrangement(true);
     } catch (error) {
-      console.error("Error generating seating arrangement:", error);
-      setStatusMessage({
+      console.error("Error generating arrangement:", error);
+      setStatus({
         type: "error",
-        message: `Failed to generate seating: ${error.message}`,
+        message: `Failed to generate seating: ${
+          error.message || "Unknown error"
+        }`,
       });
     } finally {
       setProcessing(false);
     }
   };
+
+  // Helper function to generate seating arrangement
+  const generateSeatingArrangement = async (
+    examId1,
+    examId2,
+    classroomId,
+    branch1,
+    branch2
+  ) => {
+    const result = await generateSeatingArr({
+      examId1,
+      examId2,
+      classroomId,
+      branch1,
+      branch2,
+      classroomName: form.classroomName,
+    });
+
+    if (!result) {
+      throw new Error(
+        "No response received from seating arrangement generation"
+      );
+    }
+
+    if (!result.success) {
+      throw new Error(
+        result.message || "Failed to generate seating arrangement"
+      );
+    }
+
+    return result;
+  };
+
+  // Reusable select component
+  const Select = ({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder = `Select ${label}`,
+    valueField = "code", // Add valueField parameter with default "code"
+    displayField = "name", // Add displayField parameter with default "name"
+  }) => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+        required
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option[valueField]} value={option[valueField]}>
+            {option[displayField]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  // Status message component
+  const StatusMessage = () =>
+    status.message && (
+      <div
+        className={`p-4 mb-6 rounded-md flex items-center ${
+          status.type === "success"
+            ? "bg-green-50 text-green-700 border-l-4 border-green-500"
+            : "bg-red-50 text-red-700 border-l-4 border-red-500"
+        }`}
+      >
+        <span className="material-icons mr-2">
+          {status.type === "success" ? "check_circle" : "error"}
+        </span>
+        {status.message}
+      </div>
+    );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -122,26 +258,13 @@ const SeatingGenForm = () => {
       </h1>
 
       <div className="bg-white p-8 rounded-lg shadow-lg mb-8">
-        {statusMessage.type && (
-          <div
-            className={`p-4 mb-6 rounded-md flex items-center ${
-              statusMessage.type === "success"
-                ? "bg-green-50 text-green-700 border-l-4 border-green-500"
-                : "bg-red-50 text-red-700 border-l-4 border-red-500"
-            }`}
-          >
-            <span className="material-icons mr-2">
-              {statusMessage.type === "success" ? "check_circle" : "error"}
-            </span>
-            {statusMessage.message}
-          </div>
-        )}
+        <StatusMessage />
 
-        <form onSubmit={handleArrangementSubmit} className="space-y-6">
-          {classroomName && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {form.classroomName && (
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                Seating Plan for {classroomName}
+                Seating Plan for {form.classroomName}
               </h2>
               <p className="text-gray-500 text-sm">
                 Configure the exam details below to generate arrangement
@@ -150,191 +273,49 @@ const SeatingGenForm = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Branch 1
-              </label>
-              <select
-                value={branch1}
-                onChange={async (e) => {
-                  const selectedBranch = e.target.value;
-                  setBranch1(selectedBranch);
+            <Select
+              label="Branch 1"
+              value={form.branch1}
+              onChange={(e) => {
+                const value = e.target.value;
+                updateForm({ branch1: value, examId1: "" });
+                fetchExams(value, 1);
+              }}
+              options={BRANCHES}
+              valueField="code"
+              displayField="name"
+            />
 
-                  if (selectedBranch) {
-                    try {
-                      // Fetch exams for the selected branch
-                      const { data: examsData, error: examsError } =
-                        await supabase
-                          .from("exams")
-                          .select(
-                            "id, subject, subject_code, date, start_time, end_time, branch"
-                          )
-                          .eq("branch", selectedBranch);
+            <Select
+              label="Exam 1"
+              value={form.examId1}
+              onChange={(e) => updateForm({ examId1: e.target.value })}
+              options={form.branch1Exams}
+              valueField="code"
+              displayField="name"
+            />
 
-                      if (examsError) throw examsError;
+            <Select
+              label="Branch 2"
+              value={form.branch2}
+              onChange={(e) => {
+                const value = e.target.value;
+                updateForm({ branch2: value, examId2: "" });
+                fetchExams(value, 2);
+              }}
+              options={BRANCHES}
+              valueField="code"
+              displayField="name"
+            />
 
-                      // Fetch branch name separately
-                      const { data: branchData, error: branchError } =
-                        await supabase
-                          .from("branches")
-                          .select("code, name")
-                          .eq("code", selectedBranch)
-                          .single();
-
-                      if (branchError) throw branchError;
-
-                      const branchName = branchData?.name || selectedBranch;
-
-                      // Format exam names to include subject code and date
-                      const formattedExams = examsData.map((exam) => ({
-                        id: exam.id,
-                        name: `${branchName} - ${exam.subject} (${new Date(
-                          exam.date
-                        ).toLocaleDateString()}, ${exam.start_time?.slice(
-                          0,
-                          5
-                        )})`,
-                      }));
-
-                      setBranch1Exams(formattedExams || []);
-                    } catch (error) {
-                      console.error(
-                        "Error fetching exams for branch 1:",
-                        error
-                      );
-                      setStatusMessage({
-                        type: "error",
-                        message: `Failed to fetch exams: ${error.message}`,
-                      });
-                      setBranch1Exams([]);
-                    }
-                  } else {
-                    setBranch1Exams([]);
-                  }
-                }}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                required
-              >
-                <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={`b1-${branch.code}`} value={branch.code}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Exam 1
-              </label>
-              <select
-                value={examId1}
-                onChange={(e) => setExamId1(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                required
-              >
-                <option value="">Select Exam</option>
-                {branch1Exams.map((exam) => (
-                  <option key={`e1-${exam.id}`} value={exam.id}>
-                    {exam.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Branch 2
-              </label>
-              <select
-                value={branch2}
-                onChange={async (e) => {
-                  const selectedBranch = e.target.value;
-                  setBranch2(selectedBranch);
-
-                  if (selectedBranch) {
-                    try {
-                      // Fetch exams for the selected branch
-                      const { data: examsData, error: examsError } =
-                        await supabase
-                          .from("exams")
-                          .select(
-                            "id, subject, subject_code, date, start_time, end_time, branch"
-                          )
-                          .eq("branch", selectedBranch);
-
-                      if (examsError) throw examsError;
-
-                      // Fetch branch name separately
-                      const { data: branchData, error: branchError } =
-                        await supabase
-                          .from("branches")
-                          .select("code, name")
-                          .eq("code", selectedBranch)
-                          .single();
-
-                      if (branchError) throw branchError;
-
-                      const branchName = branchData?.name || selectedBranch;
-
-                      // Format exam names to include subject code and date
-                      const formattedExams = examsData.map((exam) => ({
-                        id: exam.id,
-                        name: `${branchName} - ${exam.subject} (${new Date(
-                          exam.date
-                        ).toLocaleDateString()}, ${exam.start_time?.slice(
-                          0,
-                          5
-                        )})`,
-                      }));
-
-                      setBranch2Exams(formattedExams || []);
-                    } catch (error) {
-                      console.error(
-                        "Error fetching exams for branch 2:",
-                        error
-                      );
-                      setStatusMessage({
-                        type: "error",
-                        message: `Failed to fetch exams: ${error.message}`,
-                      });
-                      setBranch2Exams([]);
-                    }
-                  } else {
-                    setBranch2Exams([]);
-                  }
-                }}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                required
-              >
-                <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={`b2-${branch.code}`} value={branch.code}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Exam 2
-              </label>
-              <select
-                value={examId2}
-                onChange={(e) => setExamId2(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                required
-              >
-                <option value="">Select Exam</option>
-                {branch2Exams.map((exam) => (
-                  <option key={`e2-${exam.id}`} value={exam.id}>
-                    {exam.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Exam 2"
+              value={form.examId2}
+              onChange={(e) => updateForm({ examId2: e.target.value })}
+              options={form.branch2Exams}
+              valueField="code"
+              displayField="name"
+            />
           </div>
 
           <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
@@ -366,12 +347,12 @@ const SeatingGenForm = () => {
                       r="10"
                       stroke="currentColor"
                       strokeWidth="4"
-                    ></circle>
+                    />
                     <path
                       className="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                    />
                   </svg>
                   Processing...
                 </span>
@@ -383,14 +364,14 @@ const SeatingGenForm = () => {
         </form>
       </div>
 
-      {generatedArrangement && (
+      {showArrangement && (
         <div className="mt-10 bg-white p-8 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">
             Generated Seating Arrangement
           </h2>
           <SeatingArrangement
             allocatedSeats={seatingData}
-            classroomId={classroomId}
+            classroomId={form.classroomId}
           />
         </div>
       )}
