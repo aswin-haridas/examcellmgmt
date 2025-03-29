@@ -43,6 +43,27 @@ const SeatingArrangement = ({
       }
     };
 
+    const fetchClassName = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("classrooms")
+          .select("classname")
+          .eq("id", classroomId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          document.title = `Seating Arrangement - ${data.classname}`;
+        }
+      } catch (err) {
+        console.error("Failed to fetch class name:", err);
+      }
+    };
+
+    if (classroomId) {
+      fetchClassName();
+    }
+
     if (allocatedSeats) {
       // Handle different formats of allocatedSeats
       if (Array.isArray(allocatedSeats) && allocatedSeats[0]?.seating_data) {
@@ -121,8 +142,6 @@ const SeatingArrangement = ({
   // Memoize rendered benches by row groups
   const renderedBenches = useMemo(() => {
     return (
-
-
       <div className="flex flex-col gap-4">
         {benchesGrid.map((row, rowIndex) => (
           <div key={`row-${rowIndex}`} className="flex gap-8">
@@ -170,9 +189,11 @@ const SeatingArrangement = ({
   return (
     <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
-         Seating Arrangement for {className}
+        Seating Arrangement{" "}
+        {className && className.trim() !== "" && (
+          <span className="text-indigo-700">for {className}</span>
+        )}
       </h2>
-
 
       {loading ? (
         <div className="text-center py-8">

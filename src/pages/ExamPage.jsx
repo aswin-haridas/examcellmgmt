@@ -8,6 +8,7 @@ const ExamPage = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [classrooms, setClassrooms] = useState({});
   const [invigilationStatus, setInvigilationStatus] = useState({
     message: "",
     type: "",
@@ -36,6 +37,29 @@ const ExamPage = () => {
 
         console.log("Fetched exams:", data);
         setExams(data || []);
+
+        // Fetch classrooms for all exams that have a classroom_id
+        const classroomIds = data
+          .filter((exam) => exam.classroom_id)
+          .map((exam) => exam.classroom_id);
+
+        if (classroomIds.length > 0) {
+          const { data: classroomsData, error: classroomsError } =
+            await supabase
+              .from("classrooms")
+              .select("id, classname")
+              .in("id", classroomIds);
+
+          if (classroomsError) throw classroomsError;
+
+          // Create a map of classroom_id to classname
+          const classroomMap = {};
+          classroomsData.forEach((room) => {
+            classroomMap[room.id] = room.classname;
+          });
+
+          setClassrooms(classroomMap);
+        }
       } catch (err) {
         setError("Failed to fetch exams");
         console.error(err);
@@ -189,7 +213,9 @@ const ExamPage = () => {
                   <p className="text-gray-500">
                     Classroom:{" "}
                     <span className="font-medium text-gray-700">
-                      {exam.classroom_id || "Not assigned"}
+                      {exam.classroom_id
+                        ? classrooms[exam.classroom_id] || "Loading..."
+                        : "Not assigned"}
                     </span>
                   </p>
                 </div>
@@ -250,9 +276,7 @@ const ExamPage = () => {
                     onClick={() => {
                       // Navigate to seating arrangement page if classroom is assigned
                       if (exam.classroom_id) {
-                        navigate(
-                          `/classrooms/class/${exam.classroom_id}`,
-                        );
+                        navigate(`/classrooms/class/${exam.classroom_id}`);
                       } else {
                         setInvigilationStatus({
                           message: "No classroom assigned to this exam yet.",
