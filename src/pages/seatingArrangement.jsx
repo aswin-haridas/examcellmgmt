@@ -170,8 +170,9 @@ const SeatingArrangement = ({
   return (
     <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
-        {className} Seating Arrangement for
+         Seating Arrangement for {className}
       </h2>
+
 
       {loading ? (
         <div className="text-center py-8">

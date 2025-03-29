@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import supabase from "../services/supabase";
 import useVerifyUser from "../services/useVerifyUser";
 
 const ExamPage = () => {
+  const navigate = useNavigate();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -243,7 +245,23 @@ const ExamPage = () => {
                   )}
 
                 <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                  <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors mr-2">
+                  <button
+                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-700 transition-colors mr-2"
+                    onClick={() => {
+                      // Navigate to seating arrangement page if classroom is assigned
+                      if (exam.classroom_id) {
+                        navigate(
+                          `/classrooms/class/${exam.classroom_id}`,
+                        );
+                      } else {
+                        setInvigilationStatus({
+                          message: "No classroom assigned to this exam yet.",
+                          type: "error",
+                          examId: exam.id,
+                        });
+                      }
+                    }}
+                  >
                     Details
                   </button>
                   {userRole === "admin" && (

@@ -3,22 +3,34 @@ import { useNavigate } from "react-router-dom"; // Add this import for navigatio
 import supabase from "../services/supabase";
 import useVerifyUser from "../services/useVerifyUser";
 
-const Classroom = ({
-  allocatedSeats = null,
-  className = "Classroom",
-  classroomId,
-}) => {
+const Classroom = ({ allocatedSeats = null, classroomId }) => {
   const [seatingData, setSeatingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasSeatingConfig, setHasSeatingConfig] = useState(false); // New state for tracking configuration status
+  const [className, setClassName] = useState("Classroom"); // State for classroom name
   const role = useVerifyUser(); // Use the verification hook instead of direct localStorage access
   const totalBenches = 18; // As defined in generateSeatingArr.js
   const navigate = useNavigate(); // Initialize navigate function
 
   useEffect(() => {
-    const fetchDefaultSeatingData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Fetch classroom name first
+        const { data: classroomData, error: classroomError } = await supabase
+          .from("classrooms")
+          .select("classname")
+          .eq("id", classroomId)
+          .single();
+
+        if (classroomError) {
+          console.error("Error fetching classroom data:", classroomError);
+        } else if (classroomData) {
+          setClassName(classroomData.name);
+        }
+
+        // Then fetch seating data
         const { data, error } = await supabase
           .from("classroom_seating")
           .select("seating_data")
@@ -39,7 +51,7 @@ const Classroom = ({
           console.log("Seating data fetched successfully:", actualSeatingData);
         }
       } catch (err) {
-        console.error("Failed to fetch seating data:", err);
+        console.error("Failed to fetch data:", err);
       } finally {
         setLoading(false);
       }
@@ -55,7 +67,7 @@ const Classroom = ({
       }
       setLoading(false);
     } else {
-      fetchDefaultSeatingData();
+      fetchData();
     }
   }, [allocatedSeats, classroomId]);
 
