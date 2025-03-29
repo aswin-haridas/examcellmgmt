@@ -42,7 +42,7 @@ const sidebarItems = [
     to: "/classrooms",
     icon: <Building size={20} />,
     text: "Classrooms",
-    roles: ["admin"],
+    roles: ["admin","faculty"],
     isActive: (path) => path.startsWith("/classrooms"),
   },
   {
