@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Add this import for navigation
 import supabase from "../services/supabase";
+import useVerifyUser from "../services/useVerifyUser";
 
 const Classroom = ({
   allocatedSeats = null,
@@ -10,7 +11,7 @@ const Classroom = ({
   const [seatingData, setSeatingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasSeatingConfig, setHasSeatingConfig] = useState(false); // New state for tracking configuration status
-  const role = localStorage.getItem("role");
+  const role = useVerifyUser(); // Use the verification hook instead of direct localStorage access
   const totalBenches = 18; // As defined in generateSeatingArr.js
   const navigate = useNavigate(); // Initialize navigate function
 
@@ -238,10 +239,45 @@ const Classroom = ({
 
           {/* Main classroom area with benches */}
           <div className="px-8 py-6 bg-gray-100 rounded-lg border border-gray-200 shadow-inner">
-            <div className="mb-3 flex justify-end items-center">
+            <div className="mb-3 flex justify-between items-center">
               <span className="text-xs text-gray-500">
                 Total benches: {totalBenches}
               </span>
+
+              {/* Only show delete seating arrangement button for admin users */}
+              {role === "admin" && seatingData.length > 0 && (
+                <button
+                  onClick={async () => {
+                    if (
+                      window.confirm(
+                        "Are you sure you want to delete this seating arrangement?"
+                      )
+                    ) {
+                      try {
+                        const { error } = await supabase
+                          .from("classroom_seating")
+                          .delete()
+                          .eq("classroom_id", classroomId);
+
+                        if (error) throw error;
+
+                        // Clear the seating data in state
+                        setSeatingData([]);
+                        setHasSeatingConfig(false);
+                      } catch (err) {
+                        console.error(
+                          "Error deleting seating arrangement:",
+                          err
+                        );
+                        alert("Failed to delete seating arrangement");
+                      }
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded-md"
+                >
+                  Delete Arrangement
+                </button>
+              )}
             </div>
 
             {/* Benches in 3 columns */}
@@ -249,6 +285,30 @@ const Classroom = ({
               {renderBenches()}
             </div>
           </div>
+
+          {/* Show arrange button at the bottom as well if no seating arrangement */}
+          {seatingData.length === 0 && role === "admin" && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={arrange}
+                className="bg-black rounded-md text-white px-4 py-2 hover:bg-gray-800 transition-colors"
+              >
+                Arrange Seats
+              </button>
+            </div>
+          )}
+
+          {/* Show re-arrange button if seating arrangement exists */}
+          {seatingData.length > 0 && role === "admin" && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={arrange}
+                className="bg-gray-800 rounded-md text-white px-4 py-2 hover:bg-gray-700 transition-colors"
+              >
+                Re-arrange Seats
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

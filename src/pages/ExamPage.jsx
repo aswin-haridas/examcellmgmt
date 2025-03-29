@@ -59,12 +59,26 @@ const ExamPage = () => {
         return;
       }
 
+      // Check if classroom_id exists in exam data
+      if (!exam.classroom_id) {
+        setInvigilationStatus({
+          message: "No classroom assigned to this exam.",
+          type: "error",
+          examId: exam.id,
+        });
+        return;
+      }
+
+      // Create the invigilation record with classroom_id
       const invigilation = {
         exam_id: exam.id,
         faculty_id: userData.id,
         classroom_id: exam.classroom_id,
       };
 
+      console.log("Creating invigilation record:", invigilation);
+
+      // Insert the invigilation record
       const { data, error } = await supabase
         .from("invigilation")
         .insert([invigilation]);
