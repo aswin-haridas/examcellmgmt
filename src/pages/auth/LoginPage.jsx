@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useRouteLoaderData } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Snackbar, Alert } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,8 +27,10 @@ const LoginPage = () => {
       const user = await login(formData.email, formData.password);
 
       // Set loggedIn flag to true and store user details
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("role", user.role);
+      sessionStorage.setItem("loggedIn", "true");
+      sessionStorage.setItem("role", user.role);
+      sessionStorage.setItem("name", user.name);
+      sessionStorage.setItem("user", user.id);
 
       // Map user role directly to route path
       const paths = {

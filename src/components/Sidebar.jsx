@@ -42,7 +42,7 @@ const sidebarItems = [
     to: "/classrooms",
     icon: <Building size={20} />,
     text: "Classrooms",
-    roles: ["admin","faculty"],
+    roles: ["admin", "faculty"],
     isActive: (path) => path.startsWith("/classrooms"),
   },
   {
@@ -133,7 +133,7 @@ const Sidebar = ({ role }) => {
         <div>
           <SidebarItem
             icon={<FileText size={20} />}
-            text={JSON.parse(localStorage.getItem("user"))?.name}
+            text={sessionStorage.getItem("name")}
           />
         </div>
       </nav>

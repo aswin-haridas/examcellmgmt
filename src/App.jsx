@@ -20,7 +20,7 @@ import SeatingGenForm from "./pages/SeatingGenForm.jsx";
 
 // Protected route component
 const ProtectedRoute = () => {
-  const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  const isLoggedIn = sessionStorage.getItem("loggedIn") === "true";
 
   if (!isLoggedIn) {
     return <Navigate to="/" replace />;
@@ -33,9 +33,9 @@ const ProtectedRoute = () => {
 const DashboardLayout = () => {
   const [role, setRole] = useState("student");
 
-  // Get user role from localStorage on component mount
+  // Get user role from sessionStorage on component mount
   useEffect(() => {
-    const userRole = localStorage.getItem("role") || "student";
+    const userRole = sessionStorage.getItem("role") || "student";
     setRole(userRole);
   }, []);
 
@@ -51,7 +51,7 @@ const DashboardLayout = () => {
 
 function App() {
   // Check if user is already logged in
-  const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  const isLoggedIn = sessionStorage.getItem("loggedIn") === "true";
 
   return (
     <Router>
@@ -67,11 +67,14 @@ function App() {
           <Route path="/exam-schedule" element={<ExamPage />} />
           <Route path="/profile" element={<div>Profile Page</div>} />
           <Route path="/settings" element={<div>Settings Page</div>} />
-          <Route path="/users" element={<Users/>} />
+          <Route path="/users" element={<Users />} />
           <Route path="/exams" element={<ExamPage />} />
           <Route path="/classrooms" element={<Classes />} />
           <Route path="/classrooms/class/:id" element={<EditClassroom />} />
-          <Route path="/classrooms/arrange-seats/:id" element={<SeatingGenForm />} />
+          <Route
+            path="/classrooms/arrange-seats/:id"
+            element={<SeatingGenForm />}
+          />
           <Route path="/seating" element={<SeatingArrangement />} />
           <Route path="/invigilation" element={<InvigilationDuties />} />
           <Route path="/notifications" element={<div>Notifications</div>} />

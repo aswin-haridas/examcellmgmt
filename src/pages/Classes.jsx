@@ -14,13 +14,13 @@ const Classes = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [classroomToDelete, setClassroomToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Form states
   const [newClassroom, setNewClassroom] = useState({
     classname: "",
@@ -29,7 +29,7 @@ const Classes = () => {
   });
   const [addError, setAddError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Invigilation states
   const [invigilationStatus, setInvigilationStatus] = useState({
     message: "",
@@ -52,6 +52,8 @@ const Classes = () => {
       const { data, error } = await supabase.from("classrooms").select("*");
 
       if (error) throw error;
+
+      console.log("Fetched classrooms:", data);
       setClasses(data || []);
     } catch (error) {
       console.error("Error fetching classes:", error);
@@ -65,19 +67,57 @@ const Classes = () => {
     try {
       const { data, error } = await supabase
         .from("exams")
-        .select(`
-          *,
-          invigilation:invigilation(
-            *,
-            faculty:faculty_id(id, name)
-          )
-        `)
+        .select("*")
         .order("date", { ascending: true });
-        
+
       if (error) throw error;
       setExams(data || []);
     } catch (error) {
       console.error("Error fetching exams:", error);
+    }
+  };
+
+  /**
+   * Retrieves allocated students data from classrooms
+   * @returns {Object} Object containing student allocation data
+   */
+  const fetchAllocatedStudents = async (classroomId) => {
+    try {
+      // Query only the specific classroom if ID is provided
+      const query = supabase.from("classrooms").select("allocated_students");
+
+      if (classroomId) {
+        query.eq("id", classroomId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Process data only if results exist
+      if (!data || data.length === 0) {
+        return { allocatedStudents: [], firstStudent: null, lastStudent: null };
+      }
+
+      const allocatedStudents = data[0]?.allocated_students || [];
+
+      return {
+        allocatedStudents,
+        firstStudent: allocatedStudents[0] || null,
+        lastStudent:
+          allocatedStudents.length > 0
+            ? allocatedStudents[allocatedStudents.length - 1]
+            : null,
+        count: allocatedStudents.length,
+      };
+    } catch (error) {
+      console.error("Error fetching allocated students:", error);
+      return {
+        allocatedStudents: [],
+        firstStudent: null,
+        lastStudent: null,
+        count: 0,
+      };
     }
   };
 
@@ -200,7 +240,7 @@ const Classes = () => {
   const handleInvigilate = async (classroom) => {
     try {
       const exam = exams.find((e) => e.classroom_id === classroom.id);
-      
+
       if (!exam) {
         setInvigilationStatus({
           message: "No exam scheduled for this classroom.",
@@ -209,9 +249,9 @@ const Classes = () => {
         });
         return;
       }
-      
-      const userData = JSON.parse(localStorage.getItem("user"));
-      
+
+      const userData = JSON.parse(sessionStorage.getItem("user"));
+
       if (!userData?.id) {
         setInvigilationStatus({
           message: "User information not found. Please log in again.",
@@ -220,20 +260,22 @@ const Classes = () => {
         });
         return;
       }
-      
+
       // Create invigilation record
       const invigilation = {
         exam_id: exam.id,
         faculty_id: userData.id,
         classroom_id: exam.classroom_id,
       };
-      
-      const { error } = await supabase.from("invigilation").insert([invigilation]);
+
+      const { error } = await supabase
+        .from("invigilation")
+        .insert([invigilation]);
       if (error) throw error;
-      
+
       // Refresh exams data
       await refreshExamsData();
-      
+
       setInvigilationStatus({
         message: "You have been assigned as an invigilator for this exam.",
         type: "success",
@@ -255,7 +297,7 @@ const Classes = () => {
         .from("exams")
         .select(`*, invigilation:invigilation(*, faculty:faculty_id(id, name))`)
         .order("date", { ascending: true });
-        
+
       if (error) throw error;
       setExams(data || []);
     } catch (error) {
@@ -273,17 +315,29 @@ const Classes = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
         {classes.map((classroom) => {
           const exam = exams.find((e) => e.classroom_id === classroom.id);
-          
+
+          // Get first and last students if exam exists and has allocated students
+          const firstStudent = exam?.allocated_students?.[0] || null;
+          const lastStudent =
+            exam?.allocated_students?.length > 0
+              ? exam.allocated_students[exam.allocated_students.length - 1]
+              : null;
+
           return (
             <ClassroomCard
               key={classroom.id}
               classroom={classroom}
               exam={exam}
               userRole={userRole}
+              firstStudent={firstStudent}
+              lastStudent={lastStudent}
+              studentCount={exam?.allocated_students?.length || 0}
               invigilationStatus={invigilationStatus}
               onInvigilate={() => handleInvigilate(classroom)}
               onDelete={() => handleDeleteClick(classroom)}
-              onViewSeating={() => navigate(`/classrooms/class/${classroom.id}`)}
+              onViewSeating={() =>
+                navigate(`/classrooms/class/${classroom.id}`)
+              }
             />
           );
         })}
@@ -349,9 +403,6 @@ const Classes = () => {
 
 // Component definitions for modularity
 // These would typically be in separate files
-
-
-
 
 const LoadingSpinner = ({ message }) => (
   <p className="text-gray-600">{message}</p>

@@ -1,11 +1,14 @@
-const ClassroomCard = ({ 
-  classroom, 
-  exam, 
-  userRole, 
-  invigilationStatus, 
-  onInvigilate, 
-  onDelete, 
-  onViewSeating 
+const ClassroomCard = ({
+  classroom,
+  exam,
+  userRole,
+  invigilationStatus,
+  onInvigilate,
+  onDelete,
+  onViewSeating,
+  firstStudent,
+  lastStudent,
+  studentCount,
 }) => (
   <div className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 bg-white">
     <div className="flex justify-between items-center mb-4">
@@ -26,6 +29,38 @@ const ClassroomCard = ({
         <span className="text-gray-600">Benches:</span>
         <span className="font-medium">{classroom.bench_count}</span>
       </div>
+      <div className="flex justify-between">
+        <span className="text-gray-600">Students:</span>
+        <span className="font-medium">
+          {classroom.firstStudent} - {classroom.lastStudent}
+        </span>
+      </div>
+
+      {/* Display allocated students information */}
+      {exam && studentCount > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Students:</span>
+            <span className="font-medium">{studentCount}</span>
+          </div>
+          {firstStudent && lastStudent && (
+            <div className="mt-1 p-2 bg-gray-50 rounded text-xs">
+              <p className="text-gray-700 flex justify-between">
+                <span className="font-medium">First:</span>
+                <span className="bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                  {firstStudent}
+                </span>
+              </p>
+              <p className="text-gray-700 flex justify-between mt-1">
+                <span className="font-medium">Last:</span>
+                <span className="bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                  {lastStudent}
+                </span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
 
     {/* Display invigilator information if available */}
@@ -36,17 +71,19 @@ const ClassroomCard = ({
       </div>
     )}
 
-    {exam && invigilationStatus.examId === exam.id && invigilationStatus.message && (
-      <div
-        className={`mb-4 p-2 text-sm rounded ${
-          invigilationStatus.type === "success"
-            ? "bg-green-50 text-green-700 border border-green-200"
-            : "bg-red-50 text-red-700 border border-red-200"
-        }`}
-      >
-        {invigilationStatus.message}
-      </div>
-    )}
+    {exam &&
+      invigilationStatus.examId === exam.id &&
+      invigilationStatus.message && (
+        <div
+          className={`mb-4 p-2 text-sm rounded ${
+            invigilationStatus.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {invigilationStatus.message}
+        </div>
+      )}
 
     <div className="flex justify-end space-x-2 mt-4">
       {userRole === "faculty" && (
@@ -74,6 +111,5 @@ const ClassroomCard = ({
     </div>
   </div>
 );
-
 
 export default ClassroomCard;

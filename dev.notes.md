@@ -1,1 +1,1 @@
-# use localstorage to store token and check for token when login
+# use sessionStorage to store token and check for token when login

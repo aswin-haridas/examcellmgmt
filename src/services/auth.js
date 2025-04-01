@@ -13,14 +13,14 @@ export const login = async (email, password) => {
   }
 
   const user = users[0];
-  localStorage.setItem("role", user.role);
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("loggedIn", "true");
+  sessionStorage.setItem("role", user.role);
+  sessionStorage.setItem("user", JSON.stringify(user));
+  sessionStorage.setItem("loggedIn", "true");
   return user;
 };
 
 export const logout = async () => {
-  localStorage.clear();
+  sessionStorage.clear();
   window.location.href = "/"; // Force redirect to login page
   return true;
 };

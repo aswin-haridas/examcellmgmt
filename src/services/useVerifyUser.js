@@ -1,6 +1,6 @@
 export default function useVerifyUser() {
-  // Get user details from localStorage
-  const role = localStorage.getItem("role");
+  // Get user details from sessionStorage
+  const role = sessionStorage.getItem("role");
 
   return role;
 }
