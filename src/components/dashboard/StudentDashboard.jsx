@@ -37,7 +37,7 @@ const StudentDashboard = ({ userId }) => {
         const { data: studentData, error: studentError } = await supabase
           .from("students")
           .select("exams")
-          .eq("student_id", userId);
+          .eq("student_id", userId)
 
         if (studentError) {
           console.error("Error fetching student data:", studentError);
