@@ -173,6 +173,59 @@ export const generateSeatingArr = async ({
       );
     }
 
+    // Update the students table with exam assignments
+    for (const studentId of allocatedStudents) {
+      // Check if student already exists in students table
+      const { data: existingStudent, error: studentFetchError } = await supabase
+        .from("students")
+        .select("exams")
+        .eq("student_id", studentId)
+        .single();
+
+      if (studentFetchError && studentFetchError.code !== "PGRST116") {
+        // PGRST116 is "not found" error
+        console.error(
+          `Error fetching student ${studentId}:`,
+          studentFetchError
+        );
+        continue;
+      }
+
+      // Determine exams to assign
+      const examIds = [examId1, examId2].filter((id) => id); // Remove any null/undefined values
+
+      if (existingStudent) {
+        // Update existing student record
+        const updatedExams = [
+          ...new Set([...(existingStudent.exams || []), ...examIds]),
+        ];
+
+        const { error: updateStudentError } = await supabase
+          .from("students")
+          .update({ exams: updatedExams })
+          .eq("student_id", studentId);
+
+        if (updateStudentError) {
+          console.error(
+            `Error updating student ${studentId}:`,
+            updateStudentError
+          );
+        }
+      } else {
+        // Create new student record
+        const { error: insertStudentError } = await supabase
+          .from("students")
+          .insert({ student_id: studentId, exams: examIds });
+
+        if (insertStudentError) {
+          console.error(
+            `Error inserting student ${studentId}:`,
+            insertStudentError
+          );
+        }
+      }
+    }
+
     // Check if seating arrangement already exists for this classroom
     const { data: existingSeating, error: existingSeatingError } =
       await supabase
