@@ -17,6 +17,7 @@ import InvigilationDuties from "./pages/InvigilationDuties.jsx";
 import Users from "./pages/Users.jsx";
 import { EditClassroom } from "./pages/editClassroom.jsx";
 import SeatingGenForm from "./pages/SeatingGenForm.jsx";
+import NotificationPage from "./pages/NotificationPage.jsx";
 
 // Protected route component
 const ProtectedRoute = () => {
@@ -77,7 +78,7 @@ function App() {
           />
           <Route path="/seating" element={<SeatingArrangement />} />
           <Route path="/invigilation" element={<InvigilationDuties />} />
-          <Route path="/notifications" element={<div>Notifications</div>} />
+          <Route path="/notifications" element={<NotificationPage/>} />
         </Route>
 
         {/* Fallback route */}
